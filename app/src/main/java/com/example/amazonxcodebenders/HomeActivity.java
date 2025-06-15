@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -51,6 +52,14 @@ public class HomeActivity extends AppCompatActivity {
                     startActivity(new Intent(HomeActivity.this, SendMoneyOfflineActivity.class));
                 }
             }
+        });
+
+
+        WalletViewModel walletViewModel = new ViewModelProvider(this).get(WalletViewModel.class);
+        TextView tvWalletBalance = findViewById(R.id.walletBalance);
+
+        walletViewModel.getBalance().observe(this, newBalance -> {
+            tvWalletBalance.setText("₹" + String.format("%.2f", newBalance));
         });
 
         // Register network receiver
