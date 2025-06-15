@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical"
+android:padding="24dp">
+
+<TextView
+    android:id="@+id/balanceText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Wallet Balance: ₹0"
+    android:textSize="20sp"
+    android:layout_marginBottom="24dp"/>
+
+<EditText
+    android:id="@+id/phoneInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Receiver Phone Number"
+    android:inputType="phone"
+    android:layout_marginBottom="12dp"/>
+
+<EditText
+    android:id="@+id/amountInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Amount"
+    android:inputType="numberDecimal"
+    android:layout_marginBottom="12dp"/>
+
+<Button
+    android:id="@+id/sendBtn"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Send Payment"
+    android:layout_marginBottom="12dp"/>
+
+<Button
+    android:id="@+id/checkBalanceBtn"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Check Balance"
+    android:layout_marginBottom="12dp"/>
+
+<Button
+    android:id="@+id/biometricBtn"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Biometric Login"/>
+</LinearLayout>

@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
@@ -398,11 +404,13 @@
                 android:layout_columnWeight="1">
 
                 <ImageView
+                    android:id="@+id/sendMoneyImage"
                     android:src="@drawable/ic_send_money"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:contentDescription="Send Money" />
                 <TextView
+                    android:id="@+id/sendMoneyText"
                     android:text="Send Money"
                     android:textSize="12sp"
                     android:layout_marginTop="4dp"
@@ -679,3 +687,16 @@
         <!-- You can use BottomNavigationView for this section -->
     </LinearLayout>
 </ScrollView>
+    <!-- Offline Overlay Bar -->
+    <TextView
+        android:id="@+id/offlineBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#223344"
+        android:text="Offline - Showing limited content"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:padding="8dp"
+        android:visibility="gone"/>
+</FrameLayout>
