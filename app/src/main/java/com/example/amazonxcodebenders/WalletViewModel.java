@@ -7,8 +7,11 @@ import androidx.lifecycle.ViewModel;
 public class WalletViewModel extends ViewModel {
     private final MutableLiveData<Double> balance = new MutableLiveData<>(0.0);
 
-    public LiveData<Double> getBalance() { return balance; }
+    public LiveData<Double> getBalance() {
+        return balance;
+    }
 
-    public void setBalance(double newBalance) { balance.setValue(newBalance); }
+    public void setBalance(double newBalance) {
+        balance.setValue(newBalance);
+    }
 }
-
