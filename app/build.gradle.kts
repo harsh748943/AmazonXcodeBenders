@@ -41,6 +41,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(libs.biometric)
+    implementation(libs.lottie)
     implementation(libs.androidx.cardview)
 
 

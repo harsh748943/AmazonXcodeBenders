@@ -3,6 +3,7 @@ package com.example.amazonxcodebenders;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.telephony.SmsManager;
 import android.util.Base64;
 import android.util.Log;
@@ -19,8 +20,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.UUID;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
+import android.app.AlertDialog;
+import android.view.LayoutInflater;
+import android.view.View;
 
 public class SendMoneyOfflineActivity extends AppCompatActivity {
 
@@ -42,34 +48,26 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
         etAmount = findViewById(R.id.etAmount);
         MaterialButton btnSendSMS = findViewById(R.id.btnSendSMS);
 
-        // ================== Key Fixes ==================
+        // Wallet & Key Initialization
         try {
-            // 1. Ensure keys are generated
             KeyStoreHelper.generateKey();
-
-            // 2. Initialize wallet only if invalid
             if (!WalletHelper.isBalanceValid(this)) {
                 WalletHelper.setBalance(this, 2000.0);
                 Log.d("WalletInit", "Initial balance set to 2000");
             }
-
-            // 3. Sync ViewModel with actual balance
             double currentBalance = WalletHelper.getBalance(this);
             walletViewModel.setBalance(currentBalance);
-            Log.d("WalletInit", "ViewModel synced: " + currentBalance);
-
         } catch (Exception e) {
             Log.e("WalletInit", "Initialization failed", e);
             Toast.makeText(this, "Wallet initialization failed!", Toast.LENGTH_LONG).show();
-            finish(); // Critical error, close activity
+            finish();
             return;
         }
 
-        // Observe balance changes
-        walletViewModel.getBalance().observe(this, newBalance -> {
-            tvWalletBalance.setText("₹" + String.format("%.2f", newBalance));
-            Log.d("BalanceUpdate", "UI updated: " + newBalance);
-        });
+        // Observe balance changes for UI
+        walletViewModel.getBalance().observe(this, newBalance ->
+                tvWalletBalance.setText("₹" + String.format("%.2f", newBalance))
+        );
 
         btnSendSMS.setOnClickListener(v -> {
             String phone = etPhone.getText().toString().trim();
@@ -80,13 +78,10 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                 showFeedback("Invalid phone number");
                 return;
             }
-
             if (amountStr.isEmpty()) {
                 showFeedback("Enter amount");
                 return;
             }
-
-            // Convert amount
             double amount;
             try {
                 amount = Double.parseDouble(amountStr);
@@ -94,15 +89,11 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                 showFeedback("Invalid amount format");
                 return;
             }
-
-            // Get latest balance from ViewModel
             Double currentBalance = walletViewModel.getBalance().getValue();
             if (currentBalance == null) {
                 showFeedback("Balance not loaded");
                 return;
             }
-
-            // Balance checks
             if (amount <= 0) {
                 showFeedback("Amount must be > 0");
                 return;
@@ -111,8 +102,6 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                 showFeedback("Insufficient balance");
                 return;
             }
-
-            // Permission check
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
@@ -120,26 +109,129 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                         SMS_PERMISSION_CODE);
                 return;
             }
-
-            sendOfflinePaymentSMS(phone, amount);
+            // Premium: Always require biometric + PIN before transaction
+            authenticateAndSend(phone, amount);
         });
+    }
+
+    // Biometric + PIN authentication before sending SMS
+    private void authenticateAndSend(final String phone, final double amount) {
+        BiometricManager biometricManager = BiometricManager.from(this);
+        int authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+                | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
+
+        if (biometricManager.canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS) {
+            BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("Confirm Transaction")
+                    .setSubtitle("Authenticate to send money")
+                    .setAllowedAuthenticators(authenticators)
+                    .build();
+
+            BiometricPrompt biometricPrompt = new BiometricPrompt(this,
+                    ContextCompat.getMainExecutor(this),
+                    new BiometricPrompt.AuthenticationCallback() {
+                        @Override
+                        public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                            showPinDialog(phone, amount);
+                        }
+                        @Override
+                        public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                            showFeedback("Authentication cancelled");
+                        }
+                    });
+            biometricPrompt.authenticate(promptInfo);
+        } else {
+            // Fallback: PIN only
+            showPinDialog(phone, amount);
+        }
+    }
+
+    // Premium PIN dialog -> loading -> animated success
+    private void showPinDialog(final String phone, final double amount) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        final View dialogView = inflater.inflate(R.layout.dialog_pin, null);
+        final EditText etPin = dialogView.findViewById(R.id.etPin);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+                this,
+                com.google.android.material.R.style.Theme_Material3_DayNight_Dialog
+        );
+        builder.setView(dialogView)
+                .setTitle("PIN Required")
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    String enteredPin = etPin.getText().toString();
+                    if (validatePin(enteredPin)) {
+                        showLoadingAndSend(phone, amount);
+                    } else {
+                        showFeedback("Invalid PIN");
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false);
+
+        // Create and show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Set button colors after showing the dialog
+        int orangeYellowColor = ContextCompat.getColor(this, R.color.orange_yellow);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(orangeYellowColor);
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(orangeYellowColor);
+    }
+
+
+    // Show loading, then animated success, then reset fields
+    private void showLoadingAndSend(final String phone, final double amount) {
+        // Show loading dialog
+        AlertDialog loadingDialog = new AlertDialog.Builder(this,
+                com.google.android.material.R.style.Theme_Material3_DayNight_Dialog)
+                .setView(getLayoutInflater().inflate(R.layout.dialog_loading, null))
+                .setCancelable(false)
+                .create();
+        loadingDialog.show();
+
+        // Simulate transaction
+        new Handler().postDelayed(() -> {
+            sendOfflinePaymentSMS(phone, amount);
+            loadingDialog.dismiss();
+            showAnimatedSuccessDialog();
+        }, 1500);
+    }
+
+    private void showAnimatedSuccessDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this,
+                com.google.android.material.R.style.Theme_Material3_DayNight_Dialog)
+                .setView(getLayoutInflater().inflate(R.layout.dailog_success, null))
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        new Handler().postDelayed(() -> {
+            dialog.dismiss();
+            resetTransactionFields();
+        }, 1500);
+    }
+
+    private void resetTransactionFields() {
+        etPhone.setText("");
+        etAmount.setText("");
+        tvFeedback.setText("");
+    }
+
+    // Replace this with your actual PIN validation logic
+    private boolean validatePin(String enteredPin) {
+        // For demo: PIN is "2468"
+        return "2468".equals(enteredPin);
     }
 
     private void sendOfflinePaymentSMS(String receiverPhone, double amount) {
         try {
-            // 1. Prepare transaction payload
             String txnId = UUID.randomUUID().toString();
             String txnPayload = txnId + "|Me|" + receiverPhone + "|" + amount + "|" + System.currentTimeMillis();
-
-            // 2. Sign payload
             byte[] signature = KeyStoreHelper.signData(txnPayload);
             String signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP);
             String publicKeyBase64 = KeyStoreHelper.getPublicKeyBase64();
-
-            // 3. Build final message
             String fullPayload = txnPayload + "|" + signatureBase64 + "|" + publicKeyBase64;
 
-            // 4. Send SMS
             SmsManager smsManager = SmsManager.getDefault();
             if (fullPayload.length() > 160) {
                 ArrayList<String> parts = smsManager.divideMessage(fullPayload);
@@ -148,12 +240,9 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                 smsManager.sendTextMessage(receiverPhone, null, fullPayload, null, null);
             }
 
-            // 5. Update balance
             WalletHelper.subtractBalance(this, amount);
-            walletViewModel.setBalance(WalletHelper.getBalance(this)); // Sync ViewModel
-
+            walletViewModel.setBalance(WalletHelper.getBalance(this));
             showFeedback("₹" + amount + " sent to " + receiverPhone);
-
         } catch (Exception e) {
             Log.e("SendSMS", "Transaction failed", e);
             showFeedback("Error: " + e.getMessage());
@@ -170,13 +259,12 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == SMS_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Retry if fields are valid
                 String phone = etPhone.getText().toString().trim();
                 String amountStr = etAmount.getText().toString().trim();
                 if (!phone.isEmpty() && !amountStr.isEmpty()) {
                     try {
                         double amount = Double.parseDouble(amountStr);
-                        sendOfflinePaymentSMS(phone, amount);
+                        authenticateAndSend(phone, amount);
                     } catch (Exception e) {
                         showFeedback("Retry failed: Invalid input");
                     }
