@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.LinearLayout;
+
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +21,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -65,6 +72,27 @@ public class HomeActivity extends AppCompatActivity {
         // Register network receiver
         networkChangeReceiver = new NetworkChangeReceiver();
         registerReceiver(networkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+
+        LinearLayout budgetLayout = findViewById(R.id.layout_budget);
+        budgetLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, BudgetActivity.class);
+
+            // Dummy generated budget (in a real app, call generateBudgetUsingAI() here)
+            HashMap<String, Double> dummyBudget = new HashMap<>();
+            dummyBudget.put("Food", 1200.0);
+            dummyBudget.put("Travel", 600.0);
+            dummyBudget.put("Rent", 8000.0);
+            dummyBudget.put("Entertainment", 500.0);
+            dummyBudget.put("Savings", 2500.0);
+
+            for (Map.Entry<String, Double> entry : dummyBudget.entrySet()) {
+                intent.putExtra(entry.getKey(), entry.getValue());
+            }
+
+            startActivity(intent);
+        });
+
+
     }
 
     @Override
@@ -108,4 +136,5 @@ public class HomeActivity extends AppCompatActivity {
             offlineBar.setVisibility(View.VISIBLE);
         }
     }
+
 }

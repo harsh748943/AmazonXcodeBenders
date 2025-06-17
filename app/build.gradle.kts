@@ -43,6 +43,6 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.lottie)
     implementation(libs.androidx.cardview)
-
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
 }

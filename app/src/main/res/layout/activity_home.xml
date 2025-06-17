@@ -345,6 +345,7 @@
         </androidx.cardview.widget.CardView>
 
         <!-- Money Transfer Section -->
+
         <TextView
             android:layout_marginTop="20dp"
             android:text="Money Transfer"
@@ -543,6 +544,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_budget"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:layout_row="1"
@@ -553,13 +555,13 @@
                 android:layout_columnWeight="1">
 
                 <ImageView
-                    android:src="@drawable/ic_refer_friend"
+                    android:src="@drawable/ic_budgeting"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="centerCrop"
-                    android:contentDescription="Refer a Friend" />
+                    android:contentDescription="Monthly Budget" />
                 <TextView
-                    android:text="Refer a Friend"
+                    android:text="Monthly Budget"
                     android:textSize="12sp"
                     android:layout_marginTop="4dp"
                     android:gravity="center"
