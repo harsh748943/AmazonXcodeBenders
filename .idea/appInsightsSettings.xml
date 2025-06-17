@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.amazonxcodebenders" />
+                  <option name="mobileSdkAppId" value="1:71178980391:android:2b5293873c4fd6aa391202" />
+                  <option name="projectId" value="xcodebenders" />
+                  <option name="projectNumber" value="71178980391" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
