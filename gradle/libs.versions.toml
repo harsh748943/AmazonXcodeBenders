@@ -12,7 +12,7 @@ biometric = "1.2.0-alpha05"
 lottie = "6.4.0"
 google-services = "4.4.2"
 firebase-bom = "33.15.0"
-
+okhttp = "4.9.3"
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -29,7 +29,7 @@ firebase-database = { module = "com.google.firebase:firebase-database" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
-
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }

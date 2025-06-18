@@ -503,13 +503,15 @@
                     android:layout_columnWeight="1">
 
                     <ImageView
+                        android:id="@+id/voice_cmd"
                         android:src="@drawable/ic_show_qr"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
                         android:contentDescription="Show QR" />
                     <TextView
-                        android:text="Show QR"
+
+                        android:text="voice payment"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
