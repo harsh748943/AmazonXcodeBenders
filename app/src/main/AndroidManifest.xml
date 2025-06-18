@@ -21,11 +21,10 @@
         android:theme="@style/Theme.AmazonXcodeBenders"
         tools:targetApi="31">
         <activity
-
             android:name=".BudgetActivity"
-
+            android:exported="false" />
+        <activity
             android:name=".LoginActivity"
-
             android:exported="false" />
         <activity
             android:name=".SendMoneyOfflineActivity"
