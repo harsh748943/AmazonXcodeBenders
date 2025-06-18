@@ -1,5 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
+
+    alias(libs.plugins.google.services)
+
+
 }
 
 android {
@@ -43,6 +47,14 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.lottie)
     implementation(libs.androidx.cardview)
+
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    implementation (platform(libs.firebase.bom))
+    implementation (libs.firebase.analytics)
+            implementation (libs.firebase.auth)
+            implementation (libs.firebase.firestore)
+    implementation(libs.firebase.database)
+
 
 }

@@ -36,6 +36,9 @@ public class HomeActivity extends AppCompatActivity {
 
     private TextView offlineBar;
 
+    private WalletViewModel walletViewModel;
+    private TextView tvWalletBalance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +65,11 @@ public class HomeActivity extends AppCompatActivity {
         });
 
 
-        WalletViewModel walletViewModel = new ViewModelProvider(this).get(WalletViewModel.class);
-        TextView tvWalletBalance = findViewById(R.id.walletBalance);
+        walletViewModel = new ViewModelProvider(
+                this,
+                ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
+        ).get(WalletViewModel.class);
+         tvWalletBalance = findViewById(R.id.walletBalance);
 
         walletViewModel.getBalance().observe(this, newBalance -> {
             tvWalletBalance.setText("₹" + String.format("%.2f", newBalance));
@@ -136,5 +142,15 @@ public class HomeActivity extends AppCompatActivity {
             offlineBar.setVisibility(View.VISIBLE);
         }
     }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Always refresh from persistent storage
+        double currentBalance = WalletHelper.getBalance(this);
+        walletViewModel.setBalance(currentBalance);
+    }
+
 
 }

@@ -41,7 +41,10 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_send_money_offline);
 
-        walletViewModel = new ViewModelProvider(this).get(WalletViewModel.class);
+        walletViewModel = new ViewModelProvider(
+                this,
+                ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
+        ).get(WalletViewModel.class);
         tvWalletBalance = findViewById(R.id.tvWalletBalance);
         tvFeedback = findViewById(R.id.tvFeedback);
         etPhone = findViewById(R.id.etPhone);
