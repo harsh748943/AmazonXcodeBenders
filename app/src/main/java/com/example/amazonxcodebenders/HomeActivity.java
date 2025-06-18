@@ -6,14 +6,17 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.View;
-import android.widget.*;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
@@ -30,6 +33,9 @@ public class HomeActivity extends AppCompatActivity {
     private TextView sendMoneyText, offlineBar, tvWalletBalance;
     private boolean isConnected = false;
     private NetworkChangeReceiver networkChangeReceiver;
+
+    private TextView offlineBar;
+
     private WalletViewModel walletViewModel;
 
     private HashMap<String, String> contactsMap = new HashMap<>();
@@ -48,6 +54,7 @@ public class HomeActivity extends AppCompatActivity {
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
 
+        // Initial check and set text
         isConnected = isInternetAvailable();
         updateSendMoneyText(isConnected);
 
@@ -79,11 +86,13 @@ public class HomeActivity extends AppCompatActivity {
                 this,
                 ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
         ).get(WalletViewModel.class);
+         tvWalletBalance = findViewById(R.id.walletBalance);
 
         walletViewModel.getBalance().observe(this, newBalance -> {
             tvWalletBalance.setText("₹" + String.format("%.2f", newBalance));
         });
 
+        // Register network receiver
         networkChangeReceiver = new NetworkChangeReceiver();
         registerReceiver(networkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
@@ -253,6 +262,27 @@ public class HomeActivity extends AppCompatActivity {
         String digits = number.replaceAll("\\D", "");
         String last4 = digits.length() >= 4 ? digits.substring(digits.length() - 4) : digits;
         return username + last4 + "@oksbi";
+
+        LinearLayout budgetLayout = findViewById(R.id.layout_budget);
+        budgetLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, BudgetActivity.class);
+
+            // Dummy generated budget (in a real app, call generateBudgetUsingAI() here)
+            HashMap<String, Double> dummyBudget = new HashMap<>();
+            dummyBudget.put("Food", 1200.0);
+            dummyBudget.put("Travel", 600.0);
+            dummyBudget.put("Rent", 8000.0);
+            dummyBudget.put("Entertainment", 500.0);
+            dummyBudget.put("Savings", 2500.0);
+
+            for (Map.Entry<String, Double> entry : dummyBudget.entrySet()) {
+                intent.putExtra(entry.getKey(), entry.getValue());
+            }
+
+            startActivity(intent);
+        });
+
+
     }
 
     @Override
@@ -300,7 +330,9 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Always refresh from persistent storage
         double currentBalance = WalletHelper.getBalance(this);
         walletViewModel.setBalance(currentBalance);
     }
+
 }
