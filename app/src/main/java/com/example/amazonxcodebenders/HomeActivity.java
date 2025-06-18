@@ -14,9 +14,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
@@ -34,7 +38,6 @@ public class HomeActivity extends AppCompatActivity {
     private boolean isConnected = false;
     private NetworkChangeReceiver networkChangeReceiver;
 
-    private TextView offlineBar;
 
     private WalletViewModel walletViewModel;
 
@@ -53,6 +56,7 @@ public class HomeActivity extends AppCompatActivity {
         offlineBar = findViewById(R.id.offlineBar);
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
+        LinearLayout budgetLayout = findViewById(R.id.layout_budget);
 
         // Initial check and set text
         isConnected = isInternetAvailable();
@@ -79,6 +83,24 @@ public class HomeActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        budgetLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, BudgetActivity.class);
+
+            // Dummy generated budget (in a real app, call generateBudgetUsingAI() here)
+            HashMap<String, Double> dummyBudget = new HashMap<>();
+            dummyBudget.put("Food", 1200.0);
+            dummyBudget.put("Travel", 600.0);
+            dummyBudget.put("Rent", 8000.0);
+            dummyBudget.put("Entertainment", 500.0);
+            dummyBudget.put("Savings", 2500.0);
+
+            for (Map.Entry<String, Double> entry : dummyBudget.entrySet()) {
+                intent.putExtra(entry.getKey(), entry.getValue());
+            }
+
+            startActivity(intent);
+        });
 
         voiceCommandImage.setOnClickListener(v -> startVoiceRecognition());
 
@@ -254,7 +276,12 @@ public class HomeActivity extends AppCompatActivity {
                 runOnUiThread(() -> Toast.makeText(this, "AI Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
+
+
     }
+
+
+
 
     // UPI ID generation logic
     public static String generateUpiId(String name, String number) {
@@ -263,24 +290,7 @@ public class HomeActivity extends AppCompatActivity {
         String last4 = digits.length() >= 4 ? digits.substring(digits.length() - 4) : digits;
         return username + last4 + "@oksbi";
 
-        LinearLayout budgetLayout = findViewById(R.id.layout_budget);
-        budgetLayout.setOnClickListener(v -> {
-            Intent intent = new Intent(HomeActivity.this, BudgetActivity.class);
 
-            // Dummy generated budget (in a real app, call generateBudgetUsingAI() here)
-            HashMap<String, Double> dummyBudget = new HashMap<>();
-            dummyBudget.put("Food", 1200.0);
-            dummyBudget.put("Travel", 600.0);
-            dummyBudget.put("Rent", 8000.0);
-            dummyBudget.put("Entertainment", 500.0);
-            dummyBudget.put("Savings", 2500.0);
-
-            for (Map.Entry<String, Double> entry : dummyBudget.entrySet()) {
-                intent.putExtra(entry.getKey(), entry.getValue());
-            }
-
-            startActivity(intent);
-        });
 
 
     }

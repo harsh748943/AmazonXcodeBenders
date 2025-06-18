@@ -53,4 +53,5 @@ dependencies {
             implementation (libs.firebase.firestore)
     implementation(libs.firebase.database)
     implementation(libs.okhttp)
+    implementation(libs.mpandroidchart)
 }
