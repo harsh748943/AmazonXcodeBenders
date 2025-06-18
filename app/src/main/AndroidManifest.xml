@@ -21,6 +21,9 @@
         android:theme="@style/Theme.AmazonXcodeBenders"
         tools:targetApi="31">
         <activity
+            android:name=".ManualTransactionActivity"
+            android:exported="false" />
+        <activity
             android:name=".BudgetActivity"
             android:exported="false" />
         <activity

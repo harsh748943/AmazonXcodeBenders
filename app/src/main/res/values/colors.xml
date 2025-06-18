@@ -9,4 +9,14 @@
     <color name="white">#FFFFFFFF</color>
     <color name="orange_yellow">#FFC107</color>
 
+    <color name="pie_red">#FF6347</color>
+    <color name="pie_blue">#4682B4</color>
+    <color name="pie_green">#32CD32</color>
+    <color name="pie_orange">#FFA500</color>
+    <color name="pie_purple">#8A2BE2</color>
+    <color name="pie_yellow_green">#9ACD32</color>
+    <color name="pie_teal">#008080</color>
+    <color name="pie_dark_blue">#191970</color>
+    <color name="pie_brown">#A52A2A</color>
+    <color name="pie_pink">#FF69B4</color>
 </resources>
