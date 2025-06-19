@@ -64,7 +64,9 @@ public class HomeActivity extends AppCompatActivity {
 
         sendMoneyImage.setOnClickListener(v -> {
             if (isConnected) {
-                startActivity(new Intent(HomeActivity.this, SendMoneyOnlineActivity.class));
+                Intent intent = new Intent(HomeActivity.this, ChooseContactActivity.class);
+                startActivity(intent);
+
             } else {
                 startActivity(new Intent(HomeActivity.this, SendMoneyOfflineActivity.class));
             }
@@ -269,6 +271,7 @@ public class HomeActivity extends AppCompatActivity {
                 intentObj.putExtra("upi", upi);
                 intentObj.putExtra("bankingName", bankingName);
                 intentObj.putExtra("amount", amount);
+                intentObj.putExtra("showBottomSheet", true);
                 startActivity(intentObj);
 
             } catch (Exception e) {

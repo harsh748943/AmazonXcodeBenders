@@ -1,14 +1,14 @@
 package com.example.amazonxcodebenders;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public class SendMoneyOnlineActivity extends AppCompatActivity {
 
@@ -35,13 +35,40 @@ public class SendMoneyOnlineActivity extends AppCompatActivity {
         if (bankingNameView != null) bankingNameView.setText(bankingName);
 
         // Set initials
+        String initials = "";
         if (recipient != null && recipient.length() > 0) {
             String[] parts = recipient.split(" ");
-            String initials = "";
             for (String part : parts) {
                 if (part.length() > 0) initials += part.charAt(0);
             }
             userInitials.setText(initials.toUpperCase());
         }
+
+        // Only show bottom sheet if launched via voice
+        boolean showBottomSheet = getIntent().getBooleanExtra("showBottomSheet", false);
+        if (showBottomSheet) {
+            showPaymentBottomSheet(initials.toUpperCase(), recipient, upi, bankingName, amount);
+        }
+    }
+
+    private void showPaymentBottomSheet(String initials, String name, String upi, String bankingName, String amount) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
+        View sheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_payment, null);
+
+        ((TextView) sheetView.findViewById(R.id.bsUserInitials)).setText(initials);
+        ((TextView) sheetView.findViewById(R.id.bsUserName)).setText(name);
+        ((TextView) sheetView.findViewById(R.id.bsUserUpi)).setText(upi);
+        ((TextView) sheetView.findViewById(R.id.bsBankingName)).setText(bankingName);
+        ((TextView) sheetView.findViewById(R.id.bsAmount)).setText("₹" + amount);
+
+        Button payBtn = sheetView.findViewById(R.id.bsPayBtn);
+        payBtn.setText("Pay ₹" + amount);
+        payBtn.setOnClickListener(v -> {
+            // TODO: Handle payment action
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.show();
     }
 }
