@@ -257,22 +257,16 @@ public class HomeActivity extends AppCompatActivity {
                 String recipient = resultObj.optString("recipient", "");
                 String amount = resultObj.optString("amount", "");
 
+// Handle electricity bill
+                if ("pay_electricity_bill".equalsIgnoreCase(intent)) {
+                    Intent billIntent = new Intent(this, ElectricityBillActivity.class);
+                    billIntent.putExtra("amount", amount);
+                    runOnUiThread(() -> startActivity(billIntent));
+                    return;
+                }
+
                 Log.i(TAG, "Parsed DeepSeek: intent=" + intent + ", recipient=" + recipient + ", amount=" + amount);
 
-//                // Lookup number for UPI generation
-//                String key = recipient.toLowerCase().trim();
-//                String number = numberMap.get(key);
-//                String upi = generateUpiId(recipient, number != null ? number : "0000");
-//                String bankingName = recipient;
-//
-//                // Pass all details to SendMoneyActivity
-//                Intent intentObj = new Intent(this, SendMoneyOnlineActivity.class);
-//                intentObj.putExtra("recipient", recipient);
-//                intentObj.putExtra("upi", upi);
-//                intentObj.putExtra("bankingName", bankingName);
-//                intentObj.putExtra("amount", amount);
-//                intentObj.putExtra("showBottomSheet", true);
-//                startActivity(intentObj);
 
                 String number = null;
                 String recipientKey = recipient.toLowerCase().replaceAll("\\s+", "");
