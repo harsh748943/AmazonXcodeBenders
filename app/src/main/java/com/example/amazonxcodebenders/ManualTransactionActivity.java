@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.FirebaseDatabase;
@@ -12,6 +13,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Date;
+import java.util.Locale;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class ManualTransactionActivity extends AppCompatActivity {
 
@@ -114,19 +119,56 @@ public class ManualTransactionActivity extends AppCompatActivity {
         String description = etDescription.getText().toString().trim();
         String category = spinnerCategory.getSelectedItem().toString();
         String paymentMethod = spinnerPaymentMethod.getSelectedItem().toString();
-        String date = tvSelectedDate.getText().toString(); // Get selected date from TextView
+
+        // --- CORRECTED DATE HANDLING ---
+        long dateMillis = 0; // Initialize with a default value
+        String dateString = tvSelectedDate.getText().toString(); // Get the date string from TextView
+
+        // Define the date format that matches your TextView's display (e.g., "DD/MM/YYYY")
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+        if (dateString.isEmpty() || dateString.equals("Not selected")) { // Check if date was selected
+            Toast.makeText(this, "Please select a date", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            Date parsedDate = sdf.parse(dateString);
+            if (parsedDate != null) {
+                // It's good practice to normalize the time component for filtering purposes.
+                // For a transaction date, setting it to the beginning of the selected day is common.
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(parsedDate);
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                dateMillis = calendar.getTimeInMillis();
+            } else {
+                // This case is unlikely with proper date picker usage, but for robustness
+                Toast.makeText(this, "Error: Could not parse selected date.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } catch (ParseException e) {
+            // This catches errors if the date string from the TextView is malformed
+            Log.e("ManualTransaction", "Error parsing date string: " + dateString, e);
+            Toast.makeText(this, "Error: Invalid date format in selection.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // --- END CORRECTED DATE HANDLING ---
 
         int selectedTypeId = rgType.getCheckedRadioButtonId();
-        if (amountStr.isEmpty() || description.isEmpty() || date.isEmpty() || selectedTypeId == -1) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+        if (amountStr.isEmpty() || description.isEmpty() || selectedTypeId == -1) { // Removed date.isEmpty() as it's now handled
+            Toast.makeText(this, "Please fill all fields (except date, which is handled separately)", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String type = (selectedTypeId == R.id.rbIncome) ? "Income" : "Expense";
-        double amount;
+        double amount; // Not strictly needed, as we're saving amountStr directly
 
         try {
-            amount = Double.parseDouble(amountStr);
+            // Just parse to ensure it's a valid number, even if we save it as a String
+            Double.parseDouble(amountStr);
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Invalid amount entered", Toast.LENGTH_SHORT).show();
             return;
@@ -139,7 +181,8 @@ public class ManualTransactionActivity extends AppCompatActivity {
         }
 
         // Create transaction object
-        Transaction transaction = new Transaction(id, amountStr, description, date, category, paymentMethod, type);
+        // Pass dateMillis (the long timestamp) here
+        Transaction transaction = new Transaction(id, amountStr, description, dateMillis, category, paymentMethod, type);
 
         // Save to Firebase
         FirebaseDatabase.getInstance().getReference("transactions")

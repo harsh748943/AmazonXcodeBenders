@@ -19,4 +19,14 @@
     <color name="pie_dark_blue">#191970</color>
     <color name="pie_brown">#A52A2A</color>
     <color name="pie_pink">#FF69B4</color>
+
+    <color name="material_grey_100">#F5F5F5</color>
+    <color name="material_grey_700">#616161</color>
+    <color name="material_grey_800">#424242</color>
+    <color name="material_grey_900">#212121</color>
+    <color name="material_deep_purple_500">#673AB7</color>
+    <color name="material_deep_purple_700">#512DA8</color>
+    <color name="material_deep_purple_900">#311B92</color>
+    <color name="material_green_700">#388E3C</color>
+
 </resources>
