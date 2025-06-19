@@ -26,6 +26,7 @@ public class SendMoneyOnlineActivity extends AppCompatActivity {
         String bankingName = getIntent().getStringExtra("bankingName");
         String amount = getIntent().getStringExtra("amount");
 
+
         TextView userName = findViewById(R.id.userName);
         TextView userUpi = findViewById(R.id.userUpi);
         EditText amountInput = findViewById(R.id.amountInput);

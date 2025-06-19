@@ -57,6 +57,13 @@ public class HomeActivity extends AppCompatActivity {
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
         LinearLayout budgetLayout = findViewById(R.id.layout_budget);
+        loadContacts();
+        ArrayList<Contact> contactList = new ArrayList<>();
+        for (Object key : contactsMap.keySet()) {
+            String name = (String) key;
+            String phone = (String) contactsMap.get(key);
+            contactList.add(new Contact(name, phone));
+        }
 
         // Initial check and set text
         isConnected = isInternetAvailable();
@@ -65,6 +72,7 @@ public class HomeActivity extends AppCompatActivity {
         sendMoneyImage.setOnClickListener(v -> {
             if (isConnected) {
                 Intent intent = new Intent(HomeActivity.this, ChooseContactActivity.class);
+                intent.putExtra("contacts", contactList);
                 startActivity(intent);
 
             } else {
@@ -202,7 +210,7 @@ public class HomeActivity extends AppCompatActivity {
 
                 Request request = new Request.Builder()
                         .url("https://openrouter.ai/api/v1/chat/completions")
-                        .addHeader("Authorization", "Bearer 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")
+                        .addHeader("Authorization", "Bearer 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")
                         .addHeader("HTTP-Referer", "https://yourapp.com")
                         .addHeader("X-Title", "YourAppName")
                         .post(body)
