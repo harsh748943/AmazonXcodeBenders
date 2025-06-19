@@ -3,17 +3,19 @@ package com.example.amazonxcodebenders;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface; // Import for Typeface
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.LinearLayout; // Still used for root layout, not for list display
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -24,28 +26,33 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeMap; // For sorted map by category
 
 public class BudgetActivity extends AppCompatActivity {
 
     private static final String TAG = "BudgetActivity";
     private PieChart pieChart;
     private TextView budgetTextView;
-    // Removed expenseListLayout as it's no longer used for displaying list items directly
     private Button btnAddTransaction;
+    private MaterialButton btnGenerateBudget;
 
     // Filter UI elements
     private Button btnSelectStartDate, btnSelectEndDate, btnApplyFilters;
@@ -53,10 +60,10 @@ public class BudgetActivity extends AppCompatActivity {
     private Spinner spFilterCategory;
 
     // Filter data
-    private long filterStartDateMillis = 0; // Default to epoch for no start filter
-    private long filterEndDateMillis = Long.MAX_VALUE; // Default to max for no end filter
-    private String selectedFilterCategory = "All Categories"; // Default filter
-    private List<Transaction> allTransactionsFromFirebase = new ArrayList<>(); // Store all fetched transactions
+    private long filterStartDateMillis = 0;
+    private long filterEndDateMillis = Long.MAX_VALUE;
+    private String selectedFilterCategory = "All Categories";
+    private List<Transaction> allTransactionsFromFirebase = new ArrayList<>();
 
     private DatabaseReference transactionsRef;
 
@@ -69,6 +76,7 @@ public class BudgetActivity extends AppCompatActivity {
         pieChart = findViewById(R.id.pieChart);
         budgetTextView = findViewById(R.id.budgetTextView);
         btnAddTransaction = findViewById(R.id.btnAddManualTransaction);
+        btnGenerateBudget = findViewById(R.id.btnGenerateBudget);
 
         // Filter UI elements initialization
         btnSelectStartDate = findViewById(R.id.btnSelectStartDate);
@@ -81,15 +89,22 @@ public class BudgetActivity extends AppCompatActivity {
         // --- Initialize Firebase components ---
         transactionsRef = FirebaseDatabase.getInstance().getReference("transactions");
 
+
         // --- Set up UI interactions ---
         btnAddTransaction.setOnClickListener(v -> {
             Intent intent = new Intent(BudgetActivity.this, ManualTransactionActivity.class);
             startActivity(intent);
         });
 
-        btnSelectStartDate.setOnClickListener(v -> showDatePickerDialog(true)); // true for start date
-        btnSelectEndDate.setOnClickListener(v -> showDatePickerDialog(false)); // false for end date
+        btnSelectStartDate.setOnClickListener(v -> showDatePickerDialog(true));
+        btnSelectEndDate.setOnClickListener(v -> showDatePickerDialog(false));
         btnApplyFilters.setOnClickListener(v -> applyFilters());
+
+        btnGenerateBudget.setOnClickListener(v -> {
+//            Toast.makeText(BudgetActivity.this, "Generating monthly budget plan...", Toast.LENGTH_SHORT).show();
+            fetchAndGenerateBudgetPlan();
+        });
+
 
         // --- Initial setup for the pie chart appearance ---
         setupPieChart();
@@ -101,8 +116,6 @@ public class BudgetActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Fetch ALL relevant transactions from Firebase initially.
-        // We will then filter this list in memory based on user selections.
         fetchAllTransactionsFromFirebase();
     }
 
@@ -123,7 +136,7 @@ public class BudgetActivity extends AppCompatActivity {
         pieChart.setTransparentCircleRadius(61f);
 
         pieChart.setDrawCenterText(true);
-//        pieChart.setCenterText("Monthly Budget\nBreakdown"); // This text could change dynamically
+        pieChart.setCenterText("Expense Breakdown\n(Filtered)");
         pieChart.setCenterTextSize(14f);
         pieChart.setCenterTextColor(Color.BLACK);
 
@@ -147,7 +160,6 @@ public class BudgetActivity extends AppCompatActivity {
      */
     private void setDefaultFilterDates() {
         Calendar endCal = Calendar.getInstance();
-        // Set end date to end of today
         endCal.set(Calendar.HOUR_OF_DAY, 23);
         endCal.set(Calendar.MINUTE, 59);
         endCal.set(Calendar.SECOND, 59);
@@ -156,8 +168,7 @@ public class BudgetActivity extends AppCompatActivity {
         updateDateTextView(tvEndDate, endCal);
 
         Calendar startCal = Calendar.getInstance();
-        startCal.add(Calendar.MONTH, -3); // 3 months ago
-        // Set start date to beginning of that day
+        startCal.add(Calendar.MONTH, -3); // Default filter is last 3 months
         startCal.set(Calendar.HOUR_OF_DAY, 0);
         startCal.set(Calendar.MINUTE, 0);
         startCal.set(Calendar.SECOND, 0);
@@ -188,7 +199,6 @@ public class BudgetActivity extends AppCompatActivity {
                     Calendar selectedCal = Calendar.getInstance();
                     selectedCal.set(year1, monthOfYear, dayOfMonth);
                     if (isStartDate) {
-                        // Set to beginning of the day for start date
                         selectedCal.set(Calendar.HOUR_OF_DAY, 0);
                         selectedCal.set(Calendar.MINUTE, 0);
                         selectedCal.set(Calendar.SECOND, 0);
@@ -196,7 +206,6 @@ public class BudgetActivity extends AppCompatActivity {
                         filterStartDateMillis = selectedCal.getTimeInMillis();
                         updateDateTextView(tvStartDate, selectedCal);
                     } else {
-                        // Set to end of the day for end date
                         selectedCal.set(Calendar.HOUR_OF_DAY, 23);
                         selectedCal.set(Calendar.MINUTE, 59);
                         selectedCal.set(Calendar.SECOND, 59);
@@ -215,41 +224,35 @@ public class BudgetActivity extends AppCompatActivity {
      * @param calendar The Calendar object containing the date.
      */
     private void updateDateTextView(TextView tv, Calendar calendar) {
-        tv.setText(String.format(Locale.getDefault(), "%02d/%02d/%d",
-                calendar.get(Calendar.DAY_OF_MONTH),
-                calendar.get(Calendar.MONTH) + 1,
-                calendar.get(Calendar.YEAR)));
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        tv.setText(sdf.format(calendar.getTime()));
     }
 
     /**
      * Fetches ALL transaction data from Firebase. This list will be stored locally
-     * and then filtered based on user selections.
+     * and then filtered based on user selections. This is for the main filterable chart.
      */
     private void fetchAllTransactionsFromFirebase() {
         transactionsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                allTransactionsFromFirebase.clear(); // Clear previous data
-                Set<String> categories = new HashSet<>(); // To collect unique categories
+                allTransactionsFromFirebase.clear();
+                Set<String> categories = new HashSet<>();
 
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Transaction transaction = dataSnapshot.getValue(Transaction.class);
                     if (transaction != null) {
-                        transaction.id = dataSnapshot.getKey(); // Set ID
+                        transaction.id = dataSnapshot.getKey();
                         allTransactionsFromFirebase.add(transaction);
 
-                        // Collect unique categories for the spinner, only for expenses
                         if ("Expense".equalsIgnoreCase(transaction.type)) {
                             categories.add(transaction.category);
                         }
                     }
                 }
-                Log.d(TAG, "Fetched " + allTransactionsFromFirebase.size() + " total transactions from Firebase.");
+                Log.d(TAG, "Fetched " + allTransactionsFromFirebase.size() + " total transactions from Firebase for main chart filters.");
 
-                // Populate the category spinner once data is fetched
                 populateCategorySpinner(categories);
-
-                // Apply filters to display initial data (e.g., last 3 months, all categories)
                 applyFilters();
             }
 
@@ -267,18 +270,17 @@ public class BudgetActivity extends AppCompatActivity {
      */
     private void populateCategorySpinner(Set<String> uniqueCategories) {
         List<String> categoryList = new ArrayList<>(uniqueCategories);
-        categoryList.add(0, "All Categories"); // Add "All Categories" option at the beginning
+        categoryList.add(0, "All Categories");
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, categoryList);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spFilterCategory.setAdapter(adapter);
 
-        // Restore previously selected category if it exists in the new list
         int selectionIndex = categoryList.indexOf(selectedFilterCategory);
         if (selectionIndex != -1) {
             spFilterCategory.setSelection(selectionIndex);
         } else {
-            spFilterCategory.setSelection(0); // Select "All Categories" if previous selection is gone
+            spFilterCategory.setSelection(0);
             selectedFilterCategory = "All Categories";
         }
     }
@@ -292,9 +294,7 @@ public class BudgetActivity extends AppCompatActivity {
 
         List<Transaction> filteredTransactions = new ArrayList<>();
         for (Transaction t : allTransactionsFromFirebase) {
-            // Apply Date Filter
             if (t.date >= filterStartDateMillis && t.date <= filterEndDateMillis) {
-                // Apply Category Filter (only if it's an expense and category matches or "All Categories")
                 if ("Expense".equalsIgnoreCase(t.type)) {
                     if ("All Categories".equals(selectedFilterCategory) ||
                             selectedFilterCategory.equalsIgnoreCase(t.category)) {
@@ -303,7 +303,7 @@ public class BudgetActivity extends AppCompatActivity {
                 }
             }
         }
-        Log.d(TAG, "Filtered down to " + filteredTransactions.size() + " transactions.");
+        Log.d(TAG, "Filtered down to " + filteredTransactions.size() + " transactions for display.");
         generateBudgetAndShowChart(filteredTransactions);
     }
 
@@ -315,15 +315,11 @@ public class BudgetActivity extends AppCompatActivity {
      * @param transactions The list of Transaction objects to use for generating the budget.
      */
     private void generateBudgetAndShowChart(List<Transaction> transactions) {
-        // We no longer display the list directly in expenseListLayout here.
-        // The LinearLayout is removed from the budget activity.
-
-        // Step 1: Sum amounts by category, *only* for 'Expense' types
         Map<String, Double> categoryTotals = new HashMap<>();
         double totalExpensesSum = 0.0;
 
         for (Transaction t : transactions) {
-            if ("Expense".equalsIgnoreCase(t.type)) { // Only sum if it's an actual "Expense" type
+            if ("Expense".equalsIgnoreCase(t.type)) {
                 try {
                     double amountValue = Double.parseDouble(t.amount);
                     String category = t.category;
@@ -331,17 +327,12 @@ public class BudgetActivity extends AppCompatActivity {
                     totalExpensesSum += amountValue;
                 } catch (NumberFormatException e) {
                     Log.e(TAG, "Invalid amount format during sum for transaction ID: " + t.id + ", Amount: " + t.amount, e);
-                    // Skip this transaction for sum if amount is invalid
                 }
             }
         }
 
-        // --- Budget Calculation Logic ---
-        // For simplicity, use current category totals for the chart.
-        Map<String, Double> suggestedBudgetDistribution = categoryTotals;
+        Map<String, Double> chartDistribution = categoryTotals;
 
-
-        // Step 4: Show pie chart
         List<PieEntry> entries = new ArrayList<>();
         ArrayList<Integer> colors = new ArrayList<>();
 
@@ -359,8 +350,8 @@ public class BudgetActivity extends AppCompatActivity {
         };
         int colorIndex = 0;
 
-        for (Map.Entry<String, Double> entry : suggestedBudgetDistribution.entrySet()) {
-            if (entry.getValue() > 0) { // Only add categories with actual positive values
+        for (Map.Entry<String, Double> entry : chartDistribution.entrySet()) {
+            if (entry.getValue() > 0) {
                 entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
                 colors.add(materialColors[colorIndex % materialColors.length]);
                 colorIndex++;
@@ -379,7 +370,6 @@ public class BudgetActivity extends AppCompatActivity {
         dataSet.setSliceSpace(3f);
         dataSet.setSelectionShift(5f);
         dataSet.setColors(colors);
-
         dataSet.setValueLinePart1OffsetPercentage(80.f);
         dataSet.setValueLinePart1Length(0.2f);
         dataSet.setValueLinePart2Length(0.4f);
@@ -391,10 +381,257 @@ public class BudgetActivity extends AppCompatActivity {
         pieData.setValueTextColor(Color.BLACK);
 
         pieChart.setData(pieData);
-        pieChart.animateY(1400); // Animation
-        pieChart.invalidate(); // Refresh chart
+        pieChart.animateY(1400);
+        pieChart.invalidate();
 
-        // Step 5: Update the budgetTextView with total calculated expenses
         budgetTextView.setText(String.format("Total Expenses for Filtered Period: ₹%.2f", totalExpensesSum));
     }
+
+    /**
+     * Fetches transactions for the last 5 months and then calculates and displays
+     * a budget plan based on historical data.
+     */
+    private void fetchAndGenerateBudgetPlan() {
+        // Calculate timestamp for the start of the month, 5 months ago
+        Calendar startCal = Calendar.getInstance();
+        startCal.add(Calendar.MONTH, -5);
+        startCal.set(Calendar.DAY_OF_MONTH, 1); // Start from the 1st of the month
+        startCal.set(Calendar.HOUR_OF_DAY, 0);
+        startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0);
+        startCal.set(Calendar.MILLISECOND, 0);
+        long fiveMonthsAgoStartOfMonthTimestamp = startCal.getTimeInMillis();
+
+        // Calculate timestamp for the end of the current month
+        Calendar endCal = Calendar.getInstance();
+        endCal.set(Calendar.DAY_OF_MONTH, endCal.getActualMaximum(Calendar.DAY_OF_MONTH)); // Last day of current month
+        endCal.set(Calendar.HOUR_OF_DAY, 23);
+        endCal.set(Calendar.MINUTE, 59);
+        endCal.set(Calendar.SECOND, 59);
+        endCal.set(Calendar.MILLISECOND, 999);
+        long endOfCurrentMonthTimestamp = endCal.getTimeInMillis();
+
+        transactionsRef.orderByChild("date")
+                .startAt(fiveMonthsAgoStartOfMonthTimestamp)
+                .endAt(endOfCurrentMonthTimestamp)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Transaction> historicalTransactionsForBudgetPlan = new ArrayList<>(); // Renamed for clarity
+                        for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                            Transaction transaction = dataSnapshot.getValue(Transaction.class);
+                            if (transaction != null) {
+                                transaction.id = dataSnapshot.getKey();
+                                historicalTransactionsForBudgetPlan.add(transaction);
+                            }
+                        }
+                        Log.d(TAG, "Fetched " + historicalTransactionsForBudgetPlan.size() + " transactions for budget plan generation.");
+
+                        // Now, calculate the budget plan directly in Java
+                        calculateAndDisplayBudgetPlan(historicalTransactionsForBudgetPlan, 0.15); // 15% desired savings
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to load historical transactions for budget plan: " + error.getMessage(), error.toException());
+                        Toast.makeText(BudgetActivity.this, "Failed to load data for budget plan.", Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    /**
+     * Calculates the monthly budget plan based on historical transaction data.
+     * This logic is directly implemented in Java.
+     * @param historicalTransactions The list of historical transactions.
+     * @param desiredSavingsPercentage The percentage of average income to save.
+     */
+    private void calculateAndDisplayBudgetPlan(List<Transaction> historicalTransactions, double desiredSavingsPercentage) {
+        // Map to store monthly income: "YYYY-MM" -> total income
+        Map<String, Double> monthlyIncome = new HashMap<>();
+        // Map to store monthly expenses by category: "YYYY-MM" -> "Category" -> total amount
+        Map<String, Map<String, Double>> monthlyCategoryExpenses = new HashMap<>();
+
+        // Group transactions by month
+        for (Transaction t : historicalTransactions) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(t.date);
+            String yearMonth = String.format(Locale.getDefault(), "%d-%02d",
+                    cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1);
+
+            double amountNumeric = 0;
+            try {
+                amountNumeric = Double.parseDouble(t.amount);
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Invalid amount format in transaction: " + t.id + ", amount: " + t.amount);
+                continue; // Skip transaction with invalid amount
+            }
+
+            if ("Income".equalsIgnoreCase(t.type)) {
+                monthlyIncome.put(yearMonth, monthlyIncome.getOrDefault(yearMonth, 0.0) + amountNumeric);
+            } else if ("Expense".equalsIgnoreCase(t.type)) {
+                monthlyCategoryExpenses
+                        .computeIfAbsent(yearMonth, k -> new HashMap<>())
+                        .put(t.category, monthlyCategoryExpenses.get(yearMonth).getOrDefault(t.category, 0.0) + amountNumeric);
+            }
+        }
+
+        // Calculate average monthly income
+        double avgMonthlyIncome = 0;
+        if (!monthlyIncome.isEmpty()) {
+            double totalIncomeSum = 0;
+            for (double income : monthlyIncome.values()) {
+                totalIncomeSum += income;
+            }
+            avgMonthlyIncome = totalIncomeSum / monthlyIncome.size();
+        }
+
+        // Collect all unique expense categories
+        Set<String> allExpenseCategories = new HashSet<>();
+        for (Map<String, Double> categoryMap : monthlyCategoryExpenses.values()) {
+            allExpenseCategories.addAll(categoryMap.keySet());
+        }
+
+        // Calculate average monthly expenses per category
+        Map<String, Double> avgMonthlyExpensesPerCategory = new TreeMap<>(); // TreeMap for sorted output
+        for (String category : allExpenseCategories) {
+            double categoryTotalAcrossMonths = 0;
+            int monthCountForCategory = 0; // Count months where this category had expenses
+
+            for (Map<String, Double> monthData : monthlyCategoryExpenses.values()) {
+                if (monthData.containsKey(category)) {
+                    categoryTotalAcrossMonths += monthData.get(category);
+                    monthCountForCategory++;
+                }
+            }
+            // Only average if there was spending in this category over some months
+            if (monthCountForCategory > 0) {
+                avgMonthlyExpensesPerCategory.put(category, categoryTotalAcrossMonths / monthCountForCategory);
+            } else {
+                avgMonthlyExpensesPerCategory.put(category, 0.0); // No spending in this category
+            }
+        }
+
+        // Calculate recommended savings and total expenses based on averages
+        double recommendedMonthlySavings = avgMonthlyIncome * desiredSavingsPercentage;
+        double totalRecommendedMonthlyExpenseBasedOnHistory = 0;
+        for (double amount : avgMonthlyExpensesPerCategory.values()) {
+            totalRecommendedMonthlyExpenseBasedOnHistory += amount;
+        }
+
+        // Generate analysis notes
+        List<String> analysisNotes = new ArrayList<>();
+        analysisNotes.add(String.format(Locale.getDefault(), "Budget generated based on your spending and income over the last %d months.", monthlyIncome.size() > 0 ? monthlyIncome.size() : monthlyCategoryExpenses.size() > 0 ? monthlyCategoryExpenses.size() : 0));
+
+        if (avgMonthlyIncome == 0) {
+            analysisNotes.add("Historical income data is missing or insufficient. Budget recommendations for expenses are based solely on average past spending, without considering savings goals.");
+        } else {
+            double availableForExpensesAfterSavings = avgMonthlyIncome - recommendedMonthlySavings;
+            if (totalRecommendedMonthlyExpenseBasedOnHistory > availableForExpensesAfterSavings) {
+                analysisNotes.add(String.format(Locale.getDefault(), "Warning: Your average expenses (₹%.2f) exceed your income after desired savings (₹%.2f). Consider adjusting your budget or increasing income.", totalRecommendedMonthlyExpenseBasedOnHistory, availableForExpensesAfterSavings));
+            } else if (totalRecommendedMonthlyExpenseBasedOnHistory < availableForExpensesAfterSavings) {
+                analysisNotes.add(String.format(Locale.getDefault(), "Your average expenses (₹%.2f) are less than your income after desired savings (₹%.2f), indicating good financial health or room for more savings.", totalRecommendedMonthlyExpenseBasedOnHistory, availableForExpensesAfterSavings));
+            }
+        }
+
+
+        // *** CHANGE HERE: Start new activity instead of showing AlertDialog ***
+        startBudgetPlanActivity(
+                avgMonthlyExpensesPerCategory,
+                avgMonthlyIncome,
+                recommendedMonthlySavings,
+                totalRecommendedMonthlyExpenseBasedOnHistory,
+                analysisNotes
+        );
+    }
+
+
+    /**
+     * Starts the BudgetPlanActivity to display the generated budget plan.
+     * @param budgetPlan A map of category to recommended monthly amount.
+     * @param avgIncome Average monthly income.
+     * @param recommendedSavings Recommended monthly savings.
+     * @param totalRecommendedExpenses Total recommended expenses.
+     * @param analysisNotes Notes from the analysis.
+     */
+    private void startBudgetPlanActivity(Map<String, Double> budgetPlan, double avgIncome, double recommendedSavings, double totalRecommendedExpenses, List<String> analysisNotes) {
+        Intent intent = new Intent(BudgetActivity.this, BudgetPlanActivity.class);
+
+        // Convert Map to ArrayList of Strings/Doubles for Intent (Bundles can't put Map<String, Double> directly)
+        // You could also convert Map to a custom Parcelable object if this becomes complex
+        ArrayList<String> categoryNames = new ArrayList<>();
+        ArrayList<Double> categoryAmounts = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : budgetPlan.entrySet()) {
+            categoryNames.add(entry.getKey());
+            categoryAmounts.add(entry.getValue());
+        }
+
+        intent.putStringArrayListExtra("budgetCategoryNames", categoryNames);
+        intent.putExtra("budgetCategoryAmounts", categoryAmounts); // ArrayList<Double> can be put directly
+        intent.putExtra("avgIncome", avgIncome);
+        intent.putExtra("recommendedSavings", recommendedSavings);
+        intent.putExtra("totalRecommendedExpenses", totalRecommendedExpenses);
+        intent.putStringArrayListExtra("analysisNotes", new ArrayList<>(analysisNotes)); // Ensure it's an ArrayList
+
+        startActivity(intent);
+    }
+
+    // This method is now effectively replaced by startBudgetPlanActivity.
+    // It's kept for reference but is no longer called.
+    /*
+    private void showBudgetPlanDialog(Map<String, Double> budgetPlan, double avgIncome, double recommendedSavings, double totalRecommendedExpenses, List<String> analysisNotes) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Your Monthly Budget Plan");
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(30, 20, 30, 20);
+
+        // Add overall summary
+        TextView summaryTv = new TextView(this);
+        summaryTv.setText(String.format(Locale.getDefault(),
+                "Based on your past spending and income:\n\n" +
+                        "Avg. Monthly Income: ₹%.2f\n" +
+                        "Recommended Savings (15%%): ₹%.2f\n" +
+                        "Total Recommended Expenses: ₹%.2f\n\n" +
+                        "Recommended Budget per Category:",
+                avgIncome, recommendedSavings, totalRecommendedExpenses));
+        summaryTv.setTextSize(16f);
+        summaryTv.setTextColor(Color.BLACK);
+        summaryTv.setPadding(0,0,0,10);
+        layout.addView(summaryTv);
+
+        // Add category-wise budget items
+        for (Map.Entry<String, Double> entry : budgetPlan.entrySet()) {
+            TextView tv = new TextView(this);
+            tv.setText(String.format(Locale.getDefault(), "  • %s: ₹%.2f", entry.getKey(), entry.getValue()));
+            tv.setTextSize(16f);
+            tv.setTextColor(Color.DKGRAY);
+            layout.addView(tv);
+        }
+
+        // Add analysis notes
+        if (analysisNotes != null && !analysisNotes.isEmpty()) {
+            TextView notesHeader = new TextView(this);
+            notesHeader.setText("\nInsights & Notes:");
+            notesHeader.setTextSize(16f);
+            notesHeader.setTextStyle(Typeface.BOLD); // CORRECTED LINE
+            notesHeader.setTextColor(Color.BLACK);
+            notesHeader.setPadding(0,10,0,0);
+            layout.addView(notesHeader);
+
+            for (String note : analysisNotes) {
+                TextView noteTv = new TextView(this);
+                noteTv.setText(String.format(Locale.getDefault(), "  • %s", note));
+                noteTv.setTextSize(14f);
+                noteTv.setTextColor(Color.GRAY);
+                layout.addView(noteTv);
+            }
+        }
+
+
+        builder.setView(layout);
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+    */
 }

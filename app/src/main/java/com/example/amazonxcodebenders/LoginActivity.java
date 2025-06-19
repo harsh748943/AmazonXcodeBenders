@@ -1,5 +1,6 @@
 package com.example.amazonxcodebenders;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -45,29 +46,16 @@ public class LoginActivity extends AppCompatActivity {
             String phone = etPhone.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            Log.d(TAG, "Login attempt: phone=" + phone);
+
 
             if (phone.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Enter phone and password", Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Empty phone or password input");
                 return;
             }
-            DatabaseReference attemptsRef = FirebaseDatabase.getInstance().getReference("login_attempts");
-            String attemptId = attemptsRef.push().getKey();
 
-            Map<String, Object> attemptData = new HashMap<>();
-            attemptData.put("phone", phone);
-            attemptData.put("password", password); // For real apps, hash the password!
-            attemptData.put("timestamp", System.currentTimeMillis());
 
-            attemptsRef.child(attemptId).setValue(attemptData)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Login attempt stored successfully");
-                        // Proceed with login logic here
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to store login attempt: " + e.getMessage());
-                    });
+
 
 
             DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("users").child("7489434411");
@@ -86,12 +74,13 @@ public class LoginActivity extends AppCompatActivity {
                             Log.e(TAG, "Password field is null for user: " + phone);
                             return;
                         }
+                        System.out.println(storedPassword+" "+ String.valueOf(password));
                         if (storedPassword.equals(password)) {
                             Double balanceObj = dataSnapshot.child("balance").getValue(Double.class);
                             double balance = (balanceObj != null) ? balanceObj : 0.0;
                             Toast.makeText(LoginActivity.this, "Login successful! Balance: ₹" + balance, Toast.LENGTH_LONG).show();
                             Log.i(TAG, "Login successful for user: " + phone + ", Balance: " + balance);
-                            // TODO: Navigate to home screen or next activity
+                            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                         } else {
                             Toast.makeText(LoginActivity.this, "Invalid password", Toast.LENGTH_SHORT).show();
                             Log.w(TAG, "Invalid password for user: " + phone);

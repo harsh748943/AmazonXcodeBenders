@@ -204,6 +204,19 @@
         app:cornerRadius="8dp"
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
-        android:backgroundTint="@color/material_green_700"/> </LinearLayout>
+        android:backgroundTint="@color/material_green_700"/>
+
+    <!-- Add this after the "Add New Transaction" button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGenerateBudget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Generate Monthly Budget Plan"
+        app:cornerRadius="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:backgroundTint="@color/material_green_700"/>
+
+</LinearLayout>
 
 </ScrollView>

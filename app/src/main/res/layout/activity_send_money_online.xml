@@ -1,23 +1,229 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
+    android:background="@drawable/amazon_pay_gradient"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SendMoneyOnlineActivity">
+    android:fitsSystemWindows="true">
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="180dp"
-        android:layout_marginTop="371dp"
-        android:layout_marginEnd="211dp"
-        android:layout_marginBottom="607dp"
-        android:text="online"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Main Content Scrollable -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:paddingBottom="80dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Top Bar -->
+            <LinearLayout
+                android:id="@+id/topBar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:background="@android:color/transparent">
+
+                <ImageView
+                    android:id="@+id/ivBack"
+                    android:src="@drawable/ic_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="Back" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivAmazonLogo"
+                        android:src="@drawable/ic_amazon_logo"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="Amazon Logo" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivClose"
+                    android:src="@drawable/ic_close"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="Close" />
+            </LinearLayout>
+
+            <!-- Paying to -->
+            <TextView
+                android:id="@+id/payingToLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Paying to"
+                android:textStyle="bold"
+                android:textColor="#222"
+                android:textSize="18sp"
+                android:padding="16dp" />
+
+            <!-- User Info Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/userInitials"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/circle_bg"
+                    android:text="HR"
+                    android:textColor="#fff"
+                    android:textSize="22sp"
+                    android:gravity="center"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:id="@+id/userName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Harsh Rajput"
+                        android:textStyle="bold"
+                        android:textColor="#222"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:id="@+id/userUpi"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="rajputharsh2306-1@oksbi"
+                        android:textColor="#888"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Banking Name Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="8dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/bankingNameLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Banking name:"
+                    android:textColor="#444"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:id="@+id/verifiedIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="6dp"
+                    android:src="@drawable/ic_verified"
+                    android:contentDescription="Verified" />
+
+                <TextView
+                    android:id="@+id/bankingName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Harsh Rajput"
+                    android:textColor="#222"
+                    android:textSize="15sp"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Show payment history -->
+            <TextView
+                android:id="@+id/showPaymentHistory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Show payment history"
+                android:textColor="#0097A7"
+                android:textSize="15sp"
+                android:paddingStart="24dp"
+                android:paddingBottom="12dp"
+                android:paddingTop="0dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <!-- Amount Input -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingTop="32dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/rupeeSymbol"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹"
+                    android:textColor="#222"
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/amountInput"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:hint="0"
+                    android:textSize="36sp"
+                    android:inputType="number"
+                    android:gravity="center"
+                    android:maxLength="7"
+                    android:textColor="#222"
+                    android:background="@android:color/transparent" />
+            </LinearLayout>
+
+            <!-- Add Message Input -->
+            <EditText
+                android:id="@+id/addMessageInput"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="Add Message"
+                android:background="@drawable/rounded_bg"
+                android:textColor="#222"
+                android:layout_gravity="center_horizontal"
+                android:padding="10dp"
+                android:layout_marginBottom="24dp"
+                android:maxLines="2"
+                android:inputType="textCapSentences|textMultiLine"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Fixed Continue Button at Bottom -->
+    <Button
+        android:id="@+id/continueBtn"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Continue"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:textSize="18sp"
+        android:background="@drawable/rounded_yellow_btn"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp" />
+</FrameLayout>
