@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AmazonXcodeBenders</string>
+    <string name="voice_command">Voice payment command</string>
 </resources>

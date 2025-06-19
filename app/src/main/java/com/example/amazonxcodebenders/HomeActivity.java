@@ -110,7 +110,7 @@ public class HomeActivity extends AppCompatActivity {
                 this,
                 ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
         ).get(WalletViewModel.class);
-         tvWalletBalance = findViewById(R.id.walletBalance);
+        tvWalletBalance = findViewById(R.id.walletBalance);
 
         walletViewModel.getBalance().observe(this, newBalance -> {
             tvWalletBalance.setText("₹" + String.format("%.2f", newBalance));
@@ -259,13 +259,42 @@ public class HomeActivity extends AppCompatActivity {
 
                 Log.i(TAG, "Parsed DeepSeek: intent=" + intent + ", recipient=" + recipient + ", amount=" + amount);
 
-                // Lookup number for UPI generation
-                String key = recipient.toLowerCase().trim();
-                String number = numberMap.get(key);
-                String upi = generateUpiId(recipient, number != null ? number : "0000");
+//                // Lookup number for UPI generation
+//                String key = recipient.toLowerCase().trim();
+//                String number = numberMap.get(key);
+//                String upi = generateUpiId(recipient, number != null ? number : "0000");
+//                String bankingName = recipient;
+//
+//                // Pass all details to SendMoneyActivity
+//                Intent intentObj = new Intent(this, SendMoneyOnlineActivity.class);
+//                intentObj.putExtra("recipient", recipient);
+//                intentObj.putExtra("upi", upi);
+//                intentObj.putExtra("bankingName", bankingName);
+//                intentObj.putExtra("amount", amount);
+//                intentObj.putExtra("showBottomSheet", true);
+//                startActivity(intentObj);
+
+                String number = null;
+                String recipientKey = recipient.toLowerCase().replaceAll("\\s+", "");
+                for (String contactName : numberMap.keySet()) {
+                    String contactKey = contactName.toLowerCase().replaceAll("\\s+", "");
+                    if (contactKey.equals(recipientKey)) {
+                        number = numberMap.get(contactName);
+                        break;
+                    }
+                }
+
+                if (number == null) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "No contact found", Toast.LENGTH_LONG).show()
+                    );
+                    return; // Do NOT proceed
+                }
+
+// If found, proceed as before
+                String upi = generateUpiId(recipient, number);
                 String bankingName = recipient;
 
-                // Pass all details to SendMoneyActivity
                 Intent intentObj = new Intent(this, SendMoneyOnlineActivity.class);
                 intentObj.putExtra("recipient", recipient);
                 intentObj.putExtra("upi", upi);
@@ -273,6 +302,8 @@ public class HomeActivity extends AppCompatActivity {
                 intentObj.putExtra("amount", amount);
                 intentObj.putExtra("showBottomSheet", true);
                 startActivity(intentObj);
+
+
 
             } catch (Exception e) {
                 Log.e(TAG, "OpenRouter DeepSeek API exception", e);

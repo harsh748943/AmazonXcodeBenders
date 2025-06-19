@@ -1,5 +1,6 @@
 package com.example.amazonxcodebenders;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public class SendMoneyOnlineActivity extends AppCompatActivity {
+
+    private String initials = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,14 +31,13 @@ public class SendMoneyOnlineActivity extends AppCompatActivity {
         EditText amountInput = findViewById(R.id.amountInput);
         TextView userInitials = findViewById(R.id.userInitials);
         TextView bankingNameView = findViewById(R.id.bankingName);
+        Button continueBtn = findViewById(R.id.continueBtn);
 
         userName.setText(recipient);
         userUpi.setText(upi);
         amountInput.setText(amount);
         if (bankingNameView != null) bankingNameView.setText(bankingName);
 
-        // Set initials
-        String initials = "";
         if (recipient != null && recipient.length() > 0) {
             String[] parts = recipient.split(" ");
             for (String part : parts) {
@@ -44,10 +46,16 @@ public class SendMoneyOnlineActivity extends AppCompatActivity {
             userInitials.setText(initials.toUpperCase());
         }
 
+        continueBtn.setOnClickListener(v -> {
+            String currentAmount = amountInput.getText().toString().trim();
+            showPaymentBottomSheet(initials.toUpperCase(), recipient, upi, bankingName, currentAmount);
+        });
+
         // Only show bottom sheet if launched via voice
         boolean showBottomSheet = getIntent().getBooleanExtra("showBottomSheet", false);
         if (showBottomSheet) {
-            showPaymentBottomSheet(initials.toUpperCase(), recipient, upi, bankingName, amount);
+            String currentAmount = amountInput.getText().toString().trim();
+            showPaymentBottomSheet(initials.toUpperCase(), recipient, upi, bankingName, currentAmount);
         }
     }
 
