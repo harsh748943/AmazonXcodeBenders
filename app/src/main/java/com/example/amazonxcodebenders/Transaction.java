@@ -4,7 +4,7 @@ public class Transaction {
     public String id;
     public String amount;
     public String description;
-    public String date;
+    public long date;
     public String category;
     public String paymentMethod;
     public String type;
@@ -13,7 +13,7 @@ public class Transaction {
         // Required empty constructor for Firebase
     }
 
-    public Transaction(String id, String amount, String description, String date,
+    public Transaction(String id, String amount, String description, long date,
                        String category, String paymentMethod, String type) {
         this.id = id;
         this.amount = amount;

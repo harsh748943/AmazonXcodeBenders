@@ -1,46 +1,222 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/material_grey_100"> <LinearLayout
+    android:id="@+id/layout_budget"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:id="@+id/layout_budget"
-        android:orientation="vertical"
-        android:padding="16dp"
+    <TextView
+        android:id="@+id/tvBudgetTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Expenditure Overview"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/material_deep_purple_700" android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"/>
+
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-
-        <TextView
-            android:id="@+id/budgetTextView"
-            android:text="Monthly Budget Plan"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:contentPadding="16dp">
 
         <LinearLayout
-            android:id="@+id/expenseListLayout"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <!-- You can add budget details here dynamically -->
-        <com.github.mikephil.charting.charts.PieChart
-            android:id="@+id/pieChart"
-            android:layout_width="match_parent"
-            android:layout_height="350dp"
-            android:layout_marginTop="16dp" />
-
-        <Button
-            android:id="@+id/btnAddManualTransaction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Manual Transaction"
-            android:layout_marginTop="16dp" />
+            android:orientation="vertical">
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filter by Date Range"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/material_grey_800"
+                android:layout_marginBottom="12dp"/>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="From:"
+                    android:textSize="16sp"
+                    android:textColor="@color/material_grey_700"
+                    android:layout_marginEnd="16dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectStartDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Select Start Date"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"/> <TextView
+                android:id="@+id/tvStartDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Not selected"
+                android:textSize="16sp"
+                android:textColor="@color/material_grey_900"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="To:"
+                    android:textSize="16sp"
+                    android:textColor="@color/material_grey_700"
+                    android:layout_marginEnd="16dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectEndDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Select End Date"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+                <TextView
+                    android:id="@+id/tvEndDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Not selected"
+                    android:textSize="16sp"
+                    android:textColor="@color/material_grey_900"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filter by Category"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/material_grey_800"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Category:"
+                    android:textSize="16sp"
+                    android:textColor="@color/material_grey_700"
+                    android:layout_marginEnd="16dp"/>
+
+                <Spinner
+                    android:id="@+id/spFilterCategory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:spinnerMode="dropdown"
+                    android:backgroundTint="@color/material_deep_purple_500"/> </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnApplyFilters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Apply Filters"
+                app:cornerRadius="8dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"/>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:contentPadding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Expense Breakdown"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/material_grey_800"
+                android:layout_marginBottom="12dp"/>
+
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/pieChart"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/budgetTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total Expenses: ₹0.00"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/material_deep_purple_900"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddManualTransaction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add New Transaction"
+        app:cornerRadius="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:backgroundTint="@color/material_green_700"/>
+
+    <!-- Add this after the "Add New Transaction" button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGenerateBudget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Generate Monthly Budget Plan"
+        app:cornerRadius="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:backgroundTint="@color/material_green_700"/>
+
+</LinearLayout>
 
 </ScrollView>

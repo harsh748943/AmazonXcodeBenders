@@ -517,9 +517,9 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
-                        android:contentDescription="Monthly Budget" />
+                        android:contentDescription="Smart Budget" />
                     <TextView
-                        android:text="Monthly Budget"
+                        android:text="Smart Budget"
                         android:textSize="12sp"
                         android:gravity="center"
                         android:layout_marginTop="4dp"
