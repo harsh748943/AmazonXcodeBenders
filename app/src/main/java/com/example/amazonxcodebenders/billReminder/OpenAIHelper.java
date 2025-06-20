@@ -18,8 +18,7 @@ import java.util.concurrent.Executors;
 public class OpenAIHelper {
 
     public interface BillCallback {
-        void onExtracted(String amount, String dueDate, String description);
-
+        void onExtracted(String amount, String dueDate, String billType, String fullMessage);
         void onFailure(Exception e);
     }
 
@@ -34,6 +33,7 @@ public class OpenAIHelper {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 // 2. Add your OpenRouter API Key here
+                conn.setRequestProperty("Authorization", "Bearer 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");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 
@@ -75,11 +75,18 @@ public class OpenAIHelper {
                         content = cleanJsonMarkdown(content);
 
                         JSONObject data = new JSONObject(content);
-                        callback.onExtracted(
-                                data.optString("amount", "Unknown"),
-                                data.optString("due_date", "Unknown"),
-                                data.optString("description", "Unknown")
-                        );
+
+                        String amount = data.optString("amount", "Unknown");
+                        String dueDate = data.optString("due_date", "Unknown");
+//                        String fullDescription = data.optString("description", "Unknown");
+//
+//                        String billType = summarizeType(fullDescription);
+
+                        String fullDescription = data.optString("description", "Unknown");
+                        String billType = data.optString("bill_type", "Other Bill");
+
+
+                        callback.onExtracted(amount, dueDate, billType, fullDescription);
 
                     } catch (Exception e) {
                         callback.onFailure(new Exception("Parse error: " + e.getMessage()));
@@ -95,20 +102,20 @@ public class OpenAIHelper {
 
     private static String cleanJsonMarkdown(String content) {
         content = content.trim();
-        // Remove starting ``````
-        if (content.startsWith("```"))
-            content = content.substring(7).trim();
-        else if (content.startsWith("```")) {
-            content = content.substring(3).trim();
-        }
-        // Remove ending ```
-        if (content.endsWith("```")) {
-            content = content.substring(0, content.length() - 3).trim();
-        }
+        if (content.startsWith("```json")) content = content.substring(7).trim();
+        else if (content.startsWith("```")) content = content.substring(3).trim();
+        if (content.endsWith("```")) content = content.substring(0, content.length() - 3).trim();
         return content;
     }
 
+    private static String summarizeType(String description) {
+        description = description.toLowerCase();
+        if (description.contains("electricity")) return "Electricity Bill";
+        if (description.contains("gas")) return "Gas Bill";
+        if (description.contains("water")) return "Water Bill";
+        if (description.contains("credit card")) return "Credit Card Bill";
+        if (description.contains("mobile") || description.contains("recharge")) return "Mobile Recharge";
+        if (description.contains("internet") || description.contains("data")) return "Internet Bill";
+        return "Other Bill";
+    }
 }
-
-
-

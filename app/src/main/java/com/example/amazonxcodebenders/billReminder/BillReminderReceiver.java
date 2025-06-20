@@ -31,15 +31,37 @@ public class BillReminderReceiver extends BroadcastReceiver {
                     messageBody.toLowerCase().contains("payment")) {
 
                 // Call AI to extract bill details
+//                OpenAIHelper.extractBillInfo(messageBody, new OpenAIHelper.BillCallback() {
+//                    @Override
+//                    public void onExtracted(String amount, String dueDate, String description)
+//                    void onExtracted(String amount, String dueDate, String billType, String fullMessage);
+//                    {
+//                        DatabaseReference ref = FirebaseDatabase.getInstance()
+//                                .getReference("bills")
+//                                .push();
+//
+//                        ref.setValue(new BillModel(sender, messageBody, amount, dueDate, description));
+//                        Log.d("BillReminderReceiver", "Bill saved with AI: " + messageBody);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//                        e.printStackTrace();
+//                        Log.e("BillReminderReceiver", "AI extraction failed: " + e.getMessage());
+//                    }
+
+
                 OpenAIHelper.extractBillInfo(messageBody, new OpenAIHelper.BillCallback() {
                     @Override
-                    public void onExtracted(String amount, String dueDate, String description) {
+                    public void onExtracted(String amount, String dueDate, String billType, String fullMessage) {
+                        String combinedDescription = billType + " - " + fullMessage;
+
                         DatabaseReference ref = FirebaseDatabase.getInstance()
                                 .getReference("bills")
                                 .push();
 
-                        ref.setValue(new BillModel(sender, messageBody, amount, dueDate, description));
-                        Log.d("BillReminderReceiver", "Bill saved with AI: " + messageBody);
+                        ref.setValue(new BillModel(sender, messageBody, amount, dueDate, combinedDescription));
+                        Log.d("BillReminderReceiver", "Bill saved with AI: " + combinedDescription);
                     }
 
                     @Override
@@ -48,6 +70,27 @@ public class BillReminderReceiver extends BroadcastReceiver {
                         Log.e("BillReminderReceiver", "AI extraction failed: " + e.getMessage());
                     }
                 });
+
+//                OpenAIHelper.extractBillInfo(messageBody, new OpenAIHelper.BillCallback() {
+//                    @Override
+//                    public void onExtracted(String amount, String dueDate, String billType, String fullMessage) {
+//                        DatabaseReference ref = FirebaseDatabase.getInstance()
+//                                .getReference("bills")
+//                                .push();
+//
+//                        // Save billType and fullMessage
+//                        ref.setValue(new BillModel(sender, messageBody, amount, dueDate, billType, fullMessage));
+//                        Log.d("BillReminderReceiver", "Bill saved with AI: " + fullMessage);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//                        e.printStackTrace();
+//                        Log.e("BillReminderReceiver", "AI extraction failed: " + e.getMessage());
+//                    }
+//                });
+
+         //   });
             }
         }
     }

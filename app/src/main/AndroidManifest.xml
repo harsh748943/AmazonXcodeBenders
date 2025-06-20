@@ -34,6 +34,9 @@
         <activity
             android:name=".paymentOptimization.voicePayment.ChooseContactActivity"
             android:exported="false" />
+
+        <activity android:name=".GasBillActivity"
+            android:exported="false" />
         <activity
             android:name=".paymentOptimization.voicePayment.ElectricityBillActivity"
             android:exported="false" />
