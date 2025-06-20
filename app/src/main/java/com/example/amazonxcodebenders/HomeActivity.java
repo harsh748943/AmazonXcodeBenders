@@ -33,7 +33,7 @@ import org.json.*;
 public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
-    private ImageView sendMoneyImage, voiceCommandImage;
+    private ImageView sendMoneyImage, voiceCommandImage,smartReminder;
     private TextView sendMoneyText, offlineBar, tvWalletBalance;
     private boolean isConnected = false;
     private NetworkChangeReceiver networkChangeReceiver;
@@ -56,6 +56,7 @@ public class HomeActivity extends AppCompatActivity {
         offlineBar = findViewById(R.id.offlineBar);
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
+        smartReminder=findViewById(R.id.smart_reminder);
         LinearLayout budgetLayout = findViewById(R.id.layout_budget);
         loadContacts();
         ArrayList<Contact> contactList = new ArrayList<>();
@@ -138,6 +139,14 @@ public class HomeActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        smartReminder.setOnClickListener(v -> {
+
+                Intent intent = new Intent(HomeActivity.this, ViewBillsActivity.class);
+
+                startActivity(intent);
+
+        });
 
         checkAndRequestContactsPermission();
     }
