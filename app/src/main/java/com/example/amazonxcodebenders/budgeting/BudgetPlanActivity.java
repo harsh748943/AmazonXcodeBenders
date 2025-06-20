@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.budgeting;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -7,6 +7,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.amazonxcodebenders.R;
 
 import java.util.ArrayList;
 import java.util.Locale;

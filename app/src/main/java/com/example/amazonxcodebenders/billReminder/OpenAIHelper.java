@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.billReminder;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -34,7 +34,6 @@ public class OpenAIHelper {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 // 2. Add your OpenRouter API Key here
-                conn.setRequestProperty("Authorization", "Bearer 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");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 

@@ -1,29 +1,44 @@
 package com.example.amazonxcodebenders;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.speech.RecognizerIntent;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.example.amazonxcodebenders.billReminder.ViewBillsActivity;
+import com.example.amazonxcodebenders.budgeting.BudgetActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.KeyStoreHelper;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.ChooseContactActivity;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.Contact;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.ElectricityBillActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.SendMoneyOfflineActivity;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.SendMoneyOnlineActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletHelper;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletViewModel;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.qrcode.QRCodeWriter;
+
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,6 +72,9 @@ public class HomeActivity extends AppCompatActivity {
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
         smartReminder=findViewById(R.id.smart_reminder);
+        ImageView scanQrImage = findViewById(R.id.my_qr); // Use the actual id from your XML
+        scanQrImage.setOnClickListener(v -> showMyQrDialog());
+
         LinearLayout budgetLayout = findViewById(R.id.layout_budget);
         loadContacts();
         ArrayList<Contact> contactList = new ArrayList<>();
@@ -382,12 +400,62 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
-        // Always refresh from persistent storage
-        double currentBalance = WalletHelper.getBalance(this);
+        // Get the logged-in user's phone (userId)
+        String userId = LoginActivity.getLoggedInUserPhone(this); // or your own helper
+        double currentBalance = WalletHelper.getBalance(this, userId);
         walletViewModel.setBalance(currentBalance);
     }
+
+    private void showMyQrDialog() {
+        try {
+            // 1. Get your public key as Base64 string
+            String userId = LoginActivity.getLoggedInUserPhone(this); // or however you get the current user's id/phone
+            String publicKeyBase64 = KeyStoreHelper.getPublicKeyBase64(userId);
+
+            // 2. Get your userId (phone, or whatever you use)
+
+            // 3. Compose the QR content
+            String qrContent = "PubKey:" + userId + "|" + publicKeyBase64;
+
+            // 4. Inflate dialog layout
+            LayoutInflater inflater = LayoutInflater.from(this);
+            View dialogView = inflater.inflate(R.layout.dialog_my_qr, null);
+            ImageView imgQr = dialogView.findViewById(R.id.imgMyQr);
+
+            // 5. Generate QR bitmap
+            int size = 800;
+            QRCodeWriter writer = new QRCodeWriter();
+            Bitmap bmp = null;
+            try {
+                com.google.zxing.common.BitMatrix bitMatrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, size, size);
+                bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
+                for (int x = 0; x < size; x++) {
+                    for (int y = 0; y < size; y++) {
+                        bmp.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                    }
+                }
+            } catch (WriterException e) {
+                e.printStackTrace();
+            }
+            imgQr.setImageBitmap(bmp);
+
+            // 6. Show dialog
+            new AlertDialog.Builder(this)
+                    .setView(dialogView)
+                    .setPositiveButton("Close", null)
+                    .show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Unable to generate QR", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 
 }

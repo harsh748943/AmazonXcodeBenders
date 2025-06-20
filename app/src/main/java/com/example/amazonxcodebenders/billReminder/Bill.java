@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.billReminder;
 
 public class Bill {
 

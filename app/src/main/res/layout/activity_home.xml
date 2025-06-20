@@ -461,6 +461,7 @@
                     android:layout_columnWeight="1">
 
                     <ImageView
+                        android:id="@+id/my_qr"
                         android:src="@drawable/ic_bank_transfer"
                         android:layout_width="50dp"
                         android:layout_height="50dp"

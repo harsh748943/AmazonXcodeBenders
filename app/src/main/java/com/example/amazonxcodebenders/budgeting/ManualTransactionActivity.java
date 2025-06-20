@@ -1,13 +1,12 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.budgeting;
 
 import android.app.DatePickerDialog;
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.*;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.amazonxcodebenders.R;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;

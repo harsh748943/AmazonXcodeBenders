@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.paymentOptimization.voicePayment;
 
 public class AIService {
     public static class AIResult {

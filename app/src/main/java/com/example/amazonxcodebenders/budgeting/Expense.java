@@ -32,7 +32,7 @@
 //}
 //
 
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.budgeting;
 
 import com.google.firebase.database.IgnoreExtraProperties; // Optional, but good practice
 

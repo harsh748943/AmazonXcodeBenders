@@ -55,5 +55,8 @@ dependencies {
     implementation ("com.google.android.material:material:1.12.0")
     implementation(libs.okhttp)
     implementation(libs.mpandroidchart)
+    implementation(libs.zxing.core)
+    implementation(libs.zxing.android.embedded)
+
 
 }

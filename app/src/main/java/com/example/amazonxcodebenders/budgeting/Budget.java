@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.budgeting;
 
 public class Budget {
     private String id;

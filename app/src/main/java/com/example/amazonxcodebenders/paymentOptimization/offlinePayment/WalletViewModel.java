@@ -1,12 +1,10 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.paymentOptimization.offlinePayment;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
 public class WalletViewModel extends AndroidViewModel {
     private final MutableLiveData<Double> balance = new MutableLiveData<>(0.0);
@@ -19,4 +17,3 @@ public class WalletViewModel extends AndroidViewModel {
 
     public void setBalance(double newBalance) { balance.setValue(newBalance); }
 }
-

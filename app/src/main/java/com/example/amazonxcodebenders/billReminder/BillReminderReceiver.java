@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.billReminder;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

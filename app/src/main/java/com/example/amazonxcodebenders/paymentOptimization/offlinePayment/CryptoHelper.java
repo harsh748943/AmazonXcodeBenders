@@ -1,4 +1,4 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.paymentOptimization.offlinePayment;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -35,11 +35,27 @@ public class CryptoHelper {
         }
     }
 
-    private static SecretKey getSecretKey() throws Exception {
+    public static SecretKey getSecretKey() throws Exception {
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
         keyStore.load(null);
         return ((KeyStore.SecretKeyEntry) keyStore.getEntry(KEY_ALIAS, null)).getSecretKey();
     }
+
+    public static String encryptWithKey(String data, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] iv = cipher.getIV();
+        byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
+
+        // Combine IV + ciphertext
+        byte[] ivAndCiphertext = new byte[iv.length + encrypted.length];
+        System.arraycopy(iv, 0, ivAndCiphertext, 0, iv.length);
+        System.arraycopy(encrypted, 0, ivAndCiphertext, iv.length, encrypted.length);
+
+        return Base64.encodeToString(ivAndCiphertext, Base64.NO_WRAP);
+    }
+
+
 
     // Encrypts the plain text and returns IV + ciphertext as Base64
     public static String encrypt(String data) throws Exception {
@@ -61,22 +77,17 @@ public class CryptoHelper {
     }
 
     // Decrypts the Base64 string (IV + ciphertext) back to plain text
-    public static String decrypt(String encryptedData) throws Exception {
-        generateKeyIfNeeded();
-        SecretKey key = getSecretKey();
-
+    public static String decrypt(String encryptedData, SecretKey key) throws Exception {
         byte[] ivAndCiphertext = Base64.decode(encryptedData, Base64.NO_WRAP);
         byte[] iv = new byte[IV_LENGTH];
         byte[] ciphertext = new byte[ivAndCiphertext.length - IV_LENGTH];
-
         System.arraycopy(ivAndCiphertext, 0, iv, 0, IV_LENGTH);
         System.arraycopy(ivAndCiphertext, IV_LENGTH, ciphertext, 0, ciphertext.length);
-
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH, iv);
         cipher.init(Cipher.DECRYPT_MODE, key, spec);
-
         byte[] decrypted = cipher.doFinal(ciphertext);
         return new String(decrypted, StandardCharsets.UTF_8);
     }
+
 }

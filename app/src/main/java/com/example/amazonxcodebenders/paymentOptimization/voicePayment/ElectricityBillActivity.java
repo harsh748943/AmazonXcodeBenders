@@ -1,12 +1,11 @@
-package com.example.amazonxcodebenders;
+package com.example.amazonxcodebenders.paymentOptimization.voicePayment;
 
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import com.example.amazonxcodebenders.R;
 
 public class ElectricityBillActivity extends AppCompatActivity {
 
