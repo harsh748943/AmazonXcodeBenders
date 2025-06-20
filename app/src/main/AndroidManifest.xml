@@ -35,6 +35,9 @@
         <activity
             android:name=".ElectricityBillActivity"
             android:exported="false" />
+
+        <activity android:name=".GasBillActivity"
+            android:exported="false" />
         <activity
             android:name=".MoneyTransferActivity"
             android:exported="false"

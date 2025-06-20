@@ -314,9 +314,7 @@ public class HomeActivity extends AppCompatActivity {
                 intentObj.putExtra("showBottomSheet", true);
                 startActivity(intentObj);
 
-
-
-            } catch (Exception e) {
+          } catch (Exception e) {
                 Log.e(TAG, "OpenRouter DeepSeek API exception", e);
                 runOnUiThread(() -> Toast.makeText(this, "AI Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
@@ -335,10 +333,8 @@ public class HomeActivity extends AppCompatActivity {
         String last4 = digits.length() >= 4 ? digits.substring(digits.length() - 4) : digits;
         return username + last4 + "@oksbi";
 
-
-
-
     }
+
 
     @Override
     protected void onDestroy() {
@@ -347,6 +343,7 @@ public class HomeActivity extends AppCompatActivity {
             unregisterReceiver(networkChangeReceiver);
         }
     }
+
 
     private boolean isInternetAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -357,6 +354,7 @@ public class HomeActivity extends AppCompatActivity {
         return false;
     }
 
+
     private void updateSendMoneyText(boolean connected) {
         if (connected) {
             sendMoneyText.setText("Send Money");
@@ -364,6 +362,7 @@ public class HomeActivity extends AppCompatActivity {
             sendMoneyText.setText("Send Money Offline");
         }
     }
+
 
     private class NetworkChangeReceiver extends BroadcastReceiver {
         @Override
@@ -381,6 +380,7 @@ public class HomeActivity extends AppCompatActivity {
             offlineBar.setVisibility(View.VISIBLE);
         }
     }
+
 
     @Override
     protected void onResume() {

@@ -543,9 +543,9 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
-                        android:contentDescription="Receive Money" />
+                        android:contentDescription="Bill Reminders" />
                     <TextView
-                        android:text="Receive Money"
+                        android:text="Bill\nReminders"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
