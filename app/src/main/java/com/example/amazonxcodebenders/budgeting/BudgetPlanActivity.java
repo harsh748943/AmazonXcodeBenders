@@ -170,7 +170,8 @@ public class BudgetPlanActivity extends AppCompatActivity {
         StringBuilder promptBuilder = new StringBuilder();
         double avgIncome = getIntent().getDoubleExtra("avgIncome", 0);
 
-        promptBuilder.append("Based on the following list of income and expense transactions, create a smart monthly budget plan. and keep the overall sum of the expenses of all categories you are recommending to be exactly as input of monthly income ")
+        promptBuilder.append("Based on the following list of income and expense transactions, create a smart monthly budget plan. and keep the overall sum of the expenses of all categories you are recommending to be exactly as input of average monthly income. There must be some savings. ")
+                .append("Also identify if there are any over expenditure among the expenses. Give me one or 2 extra analysis also related to expenses.")
                 .append("The average monthly income to be considered is ₹").append(String.format(Locale.getDefault(), "%.2f", avgIncome)).append(". ")
                 .append("Return the output strictly as a JSON object with the following structure:\n")
                 .append("{\n")
@@ -205,7 +206,7 @@ public class BudgetPlanActivity extends AppCompatActivity {
             displayEmptyState("Failed to prepare prompt.");
             return;
         }
-
+        Log.d("AI_RESPONSE", "this" + promptBuilder);
         String url = "https://openrouter.ai/api/v1/chat/completions";
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
