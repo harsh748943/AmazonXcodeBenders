@@ -15,7 +15,7 @@
         android:layout_height="56dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:background="@android:color/transparent"
+        android:background="#FBDF4D"
         android:layout_gravity="top">
 
         <ImageView
