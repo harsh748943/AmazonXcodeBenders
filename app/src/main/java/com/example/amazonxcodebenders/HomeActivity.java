@@ -85,8 +85,20 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        registerReceiver(walletUpdateReceiver, new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED"));
-
+        // For Android 13+ (API level 33)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                    walletUpdateReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED"),
+                    Context.RECEIVER_NOT_EXPORTED // Use RECEIVER_EXPORTED if other apps need to send this broadcast
+            );
+        } else {
+            // For older Android versions
+            registerReceiver(
+                    walletUpdateReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED")
+            );
+        }
         sendMoneyImage = findViewById(R.id.sendMoneyImage);
         sendMoneyText = findViewById(R.id.sendMoneyText);
         offlineBar = findViewById(R.id.offlineBar);

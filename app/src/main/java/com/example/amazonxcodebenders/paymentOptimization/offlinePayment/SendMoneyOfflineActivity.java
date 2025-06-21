@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.telephony.SmsManager;
@@ -147,8 +148,20 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
         });
 
         // Register confirmation SMS receiver
-        registerReceiver(confirmationReceiver, new IntentFilter("com.example.amazonxcodebenders.CONFIRMATION_SMS"));
-    }
+        // For Android 13+ (API level 33)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                    confirmationReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.CONFIRMATION_SMS"),
+                    Context.RECEIVER_NOT_EXPORTED // Use RECEIVER_EXPORTED only if other apps need to send this broadcast
+            );
+        } else {
+            // For older Android versions
+            registerReceiver(
+                    confirmationReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.CONFIRMATION_SMS")
+            );
+        } }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
