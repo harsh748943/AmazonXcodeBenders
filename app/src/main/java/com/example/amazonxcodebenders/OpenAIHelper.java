@@ -117,7 +117,7 @@ public class OpenAIHelper {
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
-                conn.setRequestProperty("Authorization", "Bearer " + BuildConfig.OPENAI_API_KEY);
+//                conn.setRequestProperty("Authorization", "Bearer " + BuildConfig.OPENAI_API_KEY);
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 

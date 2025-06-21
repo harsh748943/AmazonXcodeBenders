@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -102,7 +103,8 @@ public class BudgetActivity extends AppCompatActivity {
 
         btnGenerateBudget.setOnClickListener(v -> {
 //            Toast.makeText(BudgetActivity.this, "Generating monthly budget plan...", Toast.LENGTH_SHORT).show();
-            fetchAndGenerateBudgetPlan();
+//            fetchAndGenerateBudgetPlan();
+            showIncomeInputDialog();
         });
 
 
@@ -118,6 +120,39 @@ public class BudgetActivity extends AppCompatActivity {
         super.onStart();
         fetchAllTransactionsFromFirebase();
     }
+
+    private void showIncomeInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Your Monthly Income");
+
+        final EditText input = new EditText(this);
+        input.setHint("e.g. 25000");
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        builder.setView(input);
+
+        builder.setPositiveButton("Submit", (dialog, which) -> {
+            String incomeStr = input.getText().toString().trim();
+            if (!incomeStr.isEmpty()) {
+                try {
+                    double userIncome = Double.parseDouble(incomeStr);
+                    if (userIncome > 0) {
+                        fetchAndGenerateBudgetPlan(userIncome);
+                    } else {
+                        Toast.makeText(this, "Please enter a valid positive income.", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Invalid number format.", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Income is required.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
 
     /**
      * Sets up the initial visual properties of the PieChart.
@@ -391,7 +426,7 @@ public class BudgetActivity extends AppCompatActivity {
      * Fetches transactions for the last 5 months and then calculates and displays
      * a budget plan based on historical data.
      */
-    private void fetchAndGenerateBudgetPlan() {
+    private void fetchAndGenerateBudgetPlan(double userIncome) {
         // Calculate timestamp for the start of the month, 5 months ago
         Calendar startCal = Calendar.getInstance();
         startCal.add(Calendar.MONTH, -5);
@@ -428,7 +463,7 @@ public class BudgetActivity extends AppCompatActivity {
                         Log.d(TAG, "Fetched " + historicalTransactionsForBudgetPlan.size() + " transactions for budget plan generation.");
 
                         // Now, calculate the budget plan directly in Java
-                        calculateAndDisplayBudgetPlan(historicalTransactionsForBudgetPlan, 0.15); // 15% desired savings
+                        calculateAndDisplayBudgetPlan(historicalTransactionsForBudgetPlan, userIncome); // 15% desired savings
                     }
 
                     @Override
@@ -445,7 +480,7 @@ public class BudgetActivity extends AppCompatActivity {
      * @param historicalTransactions The list of historical transactions.
      * @param desiredSavingsPercentage The percentage of average income to save.
      */
-    private void calculateAndDisplayBudgetPlan(List<Transaction> historicalTransactions, double desiredSavingsPercentage) {
+    private void calculateAndDisplayBudgetPlan(List<Transaction> historicalTransactions, double userIncome) {
         // Map to store monthly income: "YYYY-MM" -> total income
         Map<String, Double> monthlyIncome = new HashMap<>();
         // Map to store monthly expenses by category: "YYYY-MM" -> "Category" -> total amount
@@ -512,7 +547,7 @@ public class BudgetActivity extends AppCompatActivity {
         }
 
         // Calculate recommended savings and total expenses based on averages
-        double recommendedMonthlySavings = avgMonthlyIncome * desiredSavingsPercentage;
+        double recommendedMonthlySavings = avgMonthlyIncome * userIncome;
         double totalRecommendedMonthlyExpenseBasedOnHistory = 0;
         for (double amount : avgMonthlyExpensesPerCategory.values()) {
             totalRecommendedMonthlyExpenseBasedOnHistory += amount;
@@ -537,7 +572,7 @@ public class BudgetActivity extends AppCompatActivity {
         // *** CHANGE HERE: Start new activity instead of showing AlertDialog ***
         startBudgetPlanActivity(
                 avgMonthlyExpensesPerCategory,
-                avgMonthlyIncome,
+                userIncome,
                 recommendedMonthlySavings,
                 totalRecommendedMonthlyExpenseBasedOnHistory,
                 analysisNotes
@@ -558,6 +593,7 @@ public class BudgetActivity extends AppCompatActivity {
 
         // Convert Map to ArrayList of Strings/Doubles for Intent (Bundles can't put Map<String, Double> directly)
         // You could also convert Map to a custom Parcelable object if this becomes complex
+        System.out.println(avgIncome+"this is income");;
         ArrayList<String> categoryNames = new ArrayList<>();
         ArrayList<Double> categoryAmounts = new ArrayList<>();
         for (Map.Entry<String, Double> entry : budgetPlan.entrySet()) {
@@ -566,7 +602,11 @@ public class BudgetActivity extends AppCompatActivity {
         }
 
         intent.putStringArrayListExtra("budgetCategoryNames", categoryNames);
-        intent.putExtra("budgetCategoryAmounts", categoryAmounts); // ArrayList<Double> can be put directly
+        double[] categoryAmountsArray = new double[categoryAmounts.size()];
+        for (int i = 0; i < categoryAmounts.size(); i++) {
+            categoryAmountsArray[i] = categoryAmounts.get(i);
+        }
+        intent.putExtra("budgetCategoryAmounts", categoryAmountsArray);
         intent.putExtra("avgIncome", avgIncome);
         intent.putExtra("recommendedSavings", recommendedSavings);
         intent.putExtra("totalRecommendedExpenses", totalRecommendedExpenses);
