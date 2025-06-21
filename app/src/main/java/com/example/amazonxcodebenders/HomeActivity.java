@@ -1,9 +1,11 @@
 package com.example.amazonxcodebenders;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.speech.RecognizerIntent;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -24,6 +27,24 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.example.amazonxcodebenders.billReminder.ViewBillsActivity;
+import com.example.amazonxcodebenders.budgeting.BudgetActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.KeyStoreHelper;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.ChooseContactActivity;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.Contact;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.ElectricityBillActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.SendMoneyOfflineActivity;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.SendMoneyOnlineActivity;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletHelper;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletViewModel;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletHelper.TransactionRecord;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,8 +53,21 @@ import org.json.*;
 
 public class HomeActivity extends AppCompatActivity {
 
+    // HomeActivity.java के अंदर
+    private final BroadcastReceiver walletUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.amazonxcodebenders.WALLET_UPDATED".equals(intent.getAction())) {
+                String userId = LoginActivity.getLoggedInUserPhone(HomeActivity.this);
+                double currentBalance = WalletHelper.getBalance(HomeActivity.this, userId);
+                walletViewModel.setBalance(currentBalance);
+            }
+        }
+    };
+
+
     private static final String TAG = "HomeActivity";
-    private ImageView sendMoneyImage, voiceCommandImage;
+    private ImageView sendMoneyImage, voiceCommandImage,smartReminder;
     private TextView sendMoneyText, offlineBar, tvWalletBalance;
     private boolean isConnected = false;
     private NetworkChangeReceiver networkChangeReceiver;
@@ -51,20 +85,49 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        // For Android 13+ (API level 33)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                    walletUpdateReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED"),
+                    Context.RECEIVER_NOT_EXPORTED // Use RECEIVER_EXPORTED if other apps need to send this broadcast
+            );
+        } else {
+            // For older Android versions
+            registerReceiver(
+                    walletUpdateReceiver,
+                    new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED")
+            );
+        }
         sendMoneyImage = findViewById(R.id.sendMoneyImage);
         sendMoneyText = findViewById(R.id.sendMoneyText);
         offlineBar = findViewById(R.id.offlineBar);
         tvWalletBalance = findViewById(R.id.walletBalance);
         voiceCommandImage = findViewById(R.id.voice_cmd);
+        smartReminder=findViewById(R.id.smart_reminder);
+        ImageView scanQrImage = findViewById(R.id.my_qr); // Use the actual id from your XML
+        scanQrImage.setOnClickListener(v -> showMyQrDialog());
+
         LinearLayout budgetLayout = findViewById(R.id.layout_budget);
+        loadContacts();
+        ArrayList<Contact> contactList = new ArrayList<>();
+        for (Object key : contactsMap.keySet()) {
+            String name = (String) key;
+            String phone = (String) contactsMap.get(key);
+            contactList.add(new Contact(name, phone));
+        }
 
         // Initial check and set text
         isConnected = isInternetAvailable();
         updateSendMoneyText(isConnected);
 
+        if (isConnected) syncOfflineTransactions();
+
+
         sendMoneyImage.setOnClickListener(v -> {
             if (isConnected) {
                 Intent intent = new Intent(HomeActivity.this, ChooseContactActivity.class);
+                intent.putExtra("contacts", contactList);
                 startActivity(intent);
 
             } else {
@@ -130,6 +193,14 @@ public class HomeActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        smartReminder.setOnClickListener(v -> {
+
+                Intent intent = new Intent(HomeActivity.this, ViewBillsActivity.class);
+
+                startActivity(intent);
+
+        });
 
         checkAndRequestContactsPermission();
     }
@@ -202,7 +273,7 @@ public class HomeActivity extends AppCompatActivity {
 
                 Request request = new Request.Builder()
                         .url("https://openrouter.ai/api/v1/chat/completions")
-                        .addHeader("Authorization", "Bearer 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")
+                        .addHeader("Authorization", "Bearer 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")
                         .addHeader("HTTP-Referer", "https://yourapp.com")
                         .addHeader("X-Title", "YourAppName")
                         .post(body)
@@ -257,22 +328,16 @@ public class HomeActivity extends AppCompatActivity {
                 String recipient = resultObj.optString("recipient", "");
                 String amount = resultObj.optString("amount", "");
 
+// Handle electricity bill
+                if ("pay_electricity_bill".equalsIgnoreCase(intent)) {
+                    Intent billIntent = new Intent(this, ElectricityBillActivity.class);
+                    billIntent.putExtra("amount", amount);
+                    runOnUiThread(() -> startActivity(billIntent));
+                    return;
+                }
+
                 Log.i(TAG, "Parsed DeepSeek: intent=" + intent + ", recipient=" + recipient + ", amount=" + amount);
 
-//                // Lookup number for UPI generation
-//                String key = recipient.toLowerCase().trim();
-//                String number = numberMap.get(key);
-//                String upi = generateUpiId(recipient, number != null ? number : "0000");
-//                String bankingName = recipient;
-//
-//                // Pass all details to SendMoneyActivity
-//                Intent intentObj = new Intent(this, SendMoneyOnlineActivity.class);
-//                intentObj.putExtra("recipient", recipient);
-//                intentObj.putExtra("upi", upi);
-//                intentObj.putExtra("bankingName", bankingName);
-//                intentObj.putExtra("amount", amount);
-//                intentObj.putExtra("showBottomSheet", true);
-//                startActivity(intentObj);
 
                 String number = null;
                 String recipientKey = recipient.toLowerCase().replaceAll("\\s+", "");
@@ -335,6 +400,7 @@ public class HomeActivity extends AppCompatActivity {
         if (networkChangeReceiver != null) {
             unregisterReceiver(networkChangeReceiver);
         }
+        unregisterReceiver(walletUpdateReceiver);
     }
 
     private boolean isInternetAvailable() {
@@ -345,6 +411,7 @@ public class HomeActivity extends AppCompatActivity {
         }
         return false;
     }
+
 
     private void updateSendMoneyText(boolean connected) {
         if (connected) {
@@ -371,12 +438,76 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
-        // Always refresh from persistent storage
-        double currentBalance = WalletHelper.getBalance(this);
+        String userId = LoginActivity.getLoggedInUserPhone(this);
+        double currentBalance = WalletHelper.getBalance(this, userId);
         walletViewModel.setBalance(currentBalance);
     }
+
+
+    private void showMyQrDialog() {
+        try {
+            // 1. Get your public key as Base64 string
+            String userId = LoginActivity.getLoggedInUserPhone(this); // or however you get the current user's id/phone
+            String publicKeyBase64 = KeyStoreHelper.getPublicKeyBase64(userId);
+
+            // 2. Get your userId (phone, or whatever you use)
+
+            // 3. Compose the QR content
+            String qrContent = "PubKey:" + userId + "|" + publicKeyBase64;
+
+            // 4. Inflate dialog layout
+            LayoutInflater inflater = LayoutInflater.from(this);
+            View dialogView = inflater.inflate(R.layout.dialog_my_qr, null);
+            ImageView imgQr = dialogView.findViewById(R.id.imgMyQr);
+
+            // 5. Generate QR bitmap
+            int size = 800;
+            QRCodeWriter writer = new QRCodeWriter();
+            Bitmap bmp = null;
+            try {
+                com.google.zxing.common.BitMatrix bitMatrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, size, size);
+                bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
+                for (int x = 0; x < size; x++) {
+                    for (int y = 0; y < size; y++) {
+                        bmp.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                    }
+                }
+            } catch (WriterException e) {
+                e.printStackTrace();
+            }
+            imgQr.setImageBitmap(bmp);
+
+            // 6. Show dialog
+            new AlertDialog.Builder(this)
+                    .setView(dialogView)
+                    .setPositiveButton("Close", null)
+                    .show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Unable to generate QR", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void syncOfflineTransactions() {
+        String userId = LoginActivity.getLoggedInUserPhone(this);
+        List<TransactionRecord> unsynced = WalletHelper.getUnsyncedTransactions(this);
+        if (unsynced.isEmpty()) return;
+
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("transactions").child(userId);
+        for (TransactionRecord txn : unsynced) {
+            dbRef.child(txn.txnId).setValue(txn)
+                    .addOnSuccessListener(aVoid -> WalletHelper.markTransactionSynced(this, txn.txnId))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to sync txn: " + txn.txnId, e));
+        }
+    }
+
+
+
 
 }

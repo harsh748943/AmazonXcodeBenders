@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/material_grey_100"> <LinearLayout
+    android:background="@color/material_grey_100"
+    tools:context=".budgeting.BudgetActivity">
+    <LinearLayout
     android:id="@+id/layout_budget"
     android:orientation="vertical"
     android:padding="16dp"

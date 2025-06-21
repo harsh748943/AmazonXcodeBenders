@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_home"
@@ -129,8 +129,8 @@
 
                     <ImageView
                         android:src="@drawable/ic_upi"
-                        android:layout_width="128dp"
-                        android:layout_height="80dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="60dp"
                         android:scaleType="centerCrop"
                         android:contentDescription="UPI" />
                     <TextView
@@ -142,8 +142,9 @@
                         android:layout_height="wrap_content" />
                     <TextView
                         android:text="Get Rewards"
-                        android:textSize="12sp"
-                        android:textColor="#888"
+                        android:textSize="10sp"
+
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -157,9 +158,9 @@
 
                     <ImageView
                         android:src="@drawable/ic_card"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:scaleType="centerCrop"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+
                         android:contentDescription="Cards" />
                     <TextView
                         android:text="Cards"
@@ -170,8 +171,9 @@
                         android:layout_height="wrap_content" />
                     <TextView
                         android:text="Add/Manage"
-                        android:textSize="12sp"
-                        android:textColor="#888"
+                        android:textSize="10sp"
+                        android:textColor="@color/black"
+
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -185,8 +187,8 @@
 
                     <ImageView
                         android:src="@drawable/ic_wallet"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:contentDescription="Balance" />
                     <TextView
                         android:text="Balance"
@@ -199,7 +201,7 @@
                         android:id="@+id/walletBalance"
                         android:text="₹2,312.00"
                         android:textSize="12sp"
-                        android:textColor="#888"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -213,8 +215,8 @@
 
                     <ImageView
                         android:src="@drawable/ic_pay_later"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:contentDescription="Pay Later" />
                     <TextView
                         android:text="Pay Later"
@@ -225,8 +227,8 @@
                         android:layout_height="wrap_content" />
                     <TextView
                         android:text="Get started"
-                        android:textSize="12sp"
-                        android:textColor="#888"
+                        android:textSize="10sp"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -278,7 +280,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Cashback Earned"
-                                android:textColor="#888"
+                                android:textColor="@color/black"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -300,7 +302,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Offers Collected"
-                                android:textColor="#888"
+                                android:textColor="@color/black"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -322,7 +324,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Scratch cards"
-                                android:textColor="#888"
+                                android:textColor="@color/black"
                                 android:textSize="12sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -335,6 +337,7 @@
                 android:text="Money Transfer"
                 android:textStyle="bold"
                 android:textSize="16sp"
+                android:textColor="@color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
@@ -359,16 +362,18 @@
                     android:layout_columnWeight="1">
 
                     <ImageView
+                        android:id="@+id/my_qr"
                         android:src="@drawable/ic_scan_qr"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginTop="25dp"
-                        android:contentDescription="Scan any QR" />
+                        android:contentDescription="My QR" />
                     <TextView
-                        android:text="Scan any QR"
+                        android:text="My QR"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -393,6 +398,7 @@
                         android:id="@+id/sendMoneyText"
                         android:text="Send Money"
                         android:textSize="12sp"
+                        android:textColor="@color/black"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
                         android:layout_width="wrap_content"
@@ -420,6 +426,7 @@
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -446,6 +453,7 @@
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -461,6 +469,7 @@
                     android:layout_columnWeight="1">
 
                     <ImageView
+
                         android:src="@drawable/ic_bank_transfer"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
@@ -471,6 +480,7 @@
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -487,8 +497,8 @@
 
                     <ImageView
                         android:id="@+id/voice_cmd"
-                        android:src="@drawable/ic_show_qr"
-                        android:layout_width="50dp"
+                        android:src="@drawable/ic_voice_cmd"
+                        android:layout_width="60dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
                         android:contentDescription="Show QR" />
@@ -498,6 +508,7 @@
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -524,6 +535,7 @@
                         android:gravity="center"
                         android:layout_marginTop="4dp"
                         android:layout_width="wrap_content"
+                        android:textColor="@color/black"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
 
@@ -538,16 +550,18 @@
                     android:layout_columnWeight="1">
 
                     <ImageView
+                        android:id="@+id/smart_reminder"
                         android:src="@drawable/ic_receive_money"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
-                        android:contentDescription="Receive Money" />
+                        android:contentDescription="Bill Reminders" />
                     <TextView
-                        android:text="Receive Money"
+                        android:text="Bill\nReminders"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
+                        android:textColor="@color/black"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -583,6 +597,7 @@
                 android:text="Earn Rewards Every Time You Pay"
                 android:textStyle="bold"
                 android:textSize="16sp"
+                android:textColor="@color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
@@ -700,4 +715,4 @@
         android:gravity="center"
         android:padding="8dp"
         android:visibility="gone"/>
-</FrameLayout>
+</RelativeLayout>
