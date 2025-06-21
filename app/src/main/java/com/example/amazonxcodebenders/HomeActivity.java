@@ -41,6 +41,9 @@ import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletV
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.example.amazonxcodebenders.paymentOptimization.offlinePayment.WalletHelper.TransactionRecord;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +52,19 @@ import okhttp3.*;
 import org.json.*;
 
 public class HomeActivity extends AppCompatActivity {
+
+    // HomeActivity.java के अंदर
+    private final BroadcastReceiver walletUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.amazonxcodebenders.WALLET_UPDATED".equals(intent.getAction())) {
+                String userId = LoginActivity.getLoggedInUserPhone(HomeActivity.this);
+                double currentBalance = WalletHelper.getBalance(HomeActivity.this, userId);
+                walletViewModel.setBalance(currentBalance);
+            }
+        }
+    };
+
 
     private static final String TAG = "HomeActivity";
     private ImageView sendMoneyImage, voiceCommandImage,smartReminder;
@@ -68,6 +84,8 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        registerReceiver(walletUpdateReceiver, new IntentFilter("com.example.amazonxcodebenders.WALLET_UPDATED"));
 
         sendMoneyImage = findViewById(R.id.sendMoneyImage);
         sendMoneyText = findViewById(R.id.sendMoneyText);
@@ -90,6 +108,9 @@ public class HomeActivity extends AppCompatActivity {
         // Initial check and set text
         isConnected = isInternetAvailable();
         updateSendMoneyText(isConnected);
+
+        if (isConnected) syncOfflineTransactions();
+
 
         sendMoneyImage.setOnClickListener(v -> {
             if (isConnected) {
@@ -367,6 +388,7 @@ public class HomeActivity extends AppCompatActivity {
         if (networkChangeReceiver != null) {
             unregisterReceiver(networkChangeReceiver);
         }
+        unregisterReceiver(walletUpdateReceiver);
     }
 
     private boolean isInternetAvailable() {
@@ -409,11 +431,11 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Get the logged-in user's phone (userId)
-        String userId = LoginActivity.getLoggedInUserPhone(this); // or your own helper
+        String userId = LoginActivity.getLoggedInUserPhone(this);
         double currentBalance = WalletHelper.getBalance(this, userId);
         walletViewModel.setBalance(currentBalance);
     }
+
 
     private void showMyQrDialog() {
         try {
@@ -459,6 +481,20 @@ public class HomeActivity extends AppCompatActivity {
             Toast.makeText(this, "Unable to generate QR", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void syncOfflineTransactions() {
+        String userId = LoginActivity.getLoggedInUserPhone(this);
+        List<TransactionRecord> unsynced = WalletHelper.getUnsyncedTransactions(this);
+        if (unsynced.isEmpty()) return;
+
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("transactions").child(userId);
+        for (TransactionRecord txn : unsynced) {
+            dbRef.child(txn.txnId).setValue(txn)
+                    .addOnSuccessListener(aVoid -> WalletHelper.markTransactionSynced(this, txn.txnId))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to sync txn: " + txn.txnId, e));
+        }
+    }
+
 
 
 

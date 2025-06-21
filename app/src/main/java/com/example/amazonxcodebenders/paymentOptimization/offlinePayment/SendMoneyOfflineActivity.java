@@ -81,11 +81,13 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
 
         // Wallet & Key Initialization
         try {
-            KeyStoreHelper.generateKey(userId);
-            if (!WalletHelper.isBalanceValid(this, userId)) {
+            boolean valid = WalletHelper.isBalanceValid(this, userId);
+            Log.d("WalletInit", "isBalanceValid=" + valid + ", balance=" + WalletHelper.getBalance(this, userId));
+            if (!valid) {
                 WalletHelper.setBalance(this, userId, 2000.0);
                 Log.d("WalletInit", "Initial balance set to 2000");
             }
+
             double currentBalance = WalletHelper.getBalance(this, userId);
             walletViewModel.setBalance(currentBalance);
         } catch (Exception e) {
@@ -256,6 +258,8 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
     // Send payment SMS and save pending txn info for confirmation
     private void sendOfflinePaymentSMS(String receiverPhone, double amount) {
         try {
+            Log.d("SenderFlow", "Starting transaction...");
+
             String receiverPublicKeyBase64 = getReceiverPublicKey(receiverPhone);
             if (receiverPublicKeyBase64 == null) {
                 showFeedback("Receiver's public key not found. Please scan their QR.");
@@ -268,28 +272,38 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
             keyGen.init(256); // 256-bit key
             SecretKey aesKey = keyGen.generateKey();
             byte[] aesKeyBytes = aesKey.getEncoded();
+
+            Log.d("SenderFlow", "AES Key generated (raw bytes): " + Base64.encodeToString(aesKeyBytes, Base64.NO_WRAP));
             // 1. Encrypt payload with AES
             String txnId = UUID.randomUUID().toString();
             String txnPayload = txnId + "|" + userId + "|" + receiverPhone + "|" + amount + "|" + System.currentTimeMillis();
+            Log.d("SenderFlow", "Transaction payload: " + txnPayload);
             // 3. Add null check before encryption
             if (txnPayload == null) {
                 throw new IllegalArgumentException("Transaction payload is null");
             }
             String aesEncryptedPayload = CryptoHelper.encryptWithKey(txnPayload,aesKey);
 
+            Log.d("SenderFlow", "AES encrypted payload: " + aesEncryptedPayload);
             // 3. Encrypt AES key with receiver's public key
             PublicKey receiverPublicKey = KeyStoreHelper.getPublicKeyFromBase64(receiverPublicKeyBase64);
+
+            Log.d("SenderFlow", "Receiver's public key (Base64): " + receiverPublicKeyBase64);
             Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             rsaCipher.init(Cipher.ENCRYPT_MODE, receiverPublicKey);
             byte[] encryptedAesKey = rsaCipher.doFinal(aesKeyBytes);
             String encryptedAesKeyBase64 = Base64.encodeToString(encryptedAesKey, Base64.NO_WRAP);
+
+            Log.d("SenderFlow", "Encrypted AES key (RSA, Base64): " + encryptedAesKeyBase64);
             // 3. Sign the AES-encrypted payload with sender's private key
             byte[] signature = KeyStoreHelper.signData(userId, aesEncryptedPayload);
             String signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP);
+            Log.d("SenderFlow", "Signature (Base64): " + signatureBase64);
             String publicKeyBase64 = KeyStoreHelper.getPublicKeyBase64(userId);
+            Log.d("SenderFlow", "Sender's public key (Base64): " + publicKeyBase64);
             // 4. SMS format: <encAESKey>|<aesEncPayload>|<signature>|<userId>|<pubKey>
             String smsBody = encryptedAesKeyBase64 + "|" + aesEncryptedPayload + "|" + signatureBase64 + "|" + userId + "|" + publicKeyBase64;
-
+            Log.d("SenderFlow", "SMS body to send: " + smsBody);
             SmsManager smsManager = SmsManager.getDefault();
             if (smsBody.length() > 160) {
                 ArrayList<String> parts = smsManager.divideMessage(smsBody);
@@ -297,13 +311,21 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
             } else {
                 smsManager.sendTextMessage(receiverPhone, null, smsBody, null, null);
             }
-
+            Log.d("SenderFlow", "SMS sent to: " + receiverPhone);
             // Save pending transaction info for confirmation
             pendingTxnId = txnId;
             pendingAmount = amount;
             pendingRecipient = receiverPhone;
 
             showFeedback("Waiting for confirmation from " + receiverPhone + "...");
+
+            // After sending SMS and before showFeedback("Waiting for confirmation...")
+// Save transaction locally for offline history and future sync
+            WalletHelper.TransactionRecord txnRecord = new WalletHelper.TransactionRecord(
+                    txnId, aesEncryptedPayload, signatureBase64, userId, receiverPhone, System.currentTimeMillis(), false
+            );
+            WalletHelper.saveTransaction(this, txnRecord);
+
 
         } catch (Exception e) {
             Log.e("SendSMS", "Transaction failed", e);
@@ -327,6 +349,8 @@ public class SendMoneyOfflineActivity extends AppCompatActivity {
                 walletViewModel.setBalance(WalletHelper.getBalance(SendMoneyOfflineActivity.this, userId));
                 showFeedback("₹" + pendingAmount + " sent to " + pendingRecipient + " successfully!");
                 showAnimatedSuccessDialog();
+                Intent intent1 = new Intent("com.example.amazonxcodebenders.WALLET_UPDATED");
+                context.sendBroadcast(intent1);
             } else if (!success) {
                 showFeedback("Transaction failed or rejected by recipient.");
             }

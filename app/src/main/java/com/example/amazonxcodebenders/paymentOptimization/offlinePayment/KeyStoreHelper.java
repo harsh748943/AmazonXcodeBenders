@@ -21,21 +21,35 @@ public class KeyStoreHelper {
 
     // Generate per-user key
     public static void generateKey(String userId) throws Exception {
+
+
+// Then generate new key with all purposes including DECRYPT
+
         String alias = "my_rsa_key_" + userId; // Unique per user
         KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
-        keyStore.load(null);
+        keyStore.load(null); // Initialization attempt
+//        if (keyStore.containsAlias(alias)) {
+//            keyStore.deleteEntry(alias); // Delete old key without DECRYPT purpose
+//        }
+
         if (!keyStore.containsAlias(alias)) {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance(
                     KeyProperties.KEY_ALGORITHM_RSA,
                     ANDROID_KEYSTORE
             );
+            // Updated KeyGenParameterSpec in generateKey()
             KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                     alias,
-                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY
+                    KeyProperties.PURPOSE_SIGN |
+                            KeyProperties.PURPOSE_VERIFY |
+                            KeyProperties.PURPOSE_ENCRYPT |  // Add encryption purpose
+                            KeyProperties.PURPOSE_DECRYPT     // Add decryption purpose
             )
                     .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                     .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1) // Add encryption padding
                     .build();
+
             kpg.initialize(spec);
             kpg.generateKeyPair();
         }

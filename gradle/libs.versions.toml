@@ -16,6 +16,7 @@ okhttp = "4.9.3"
 mpandroidchart = "3.1.0"
 zxing-core = "3.5.3"
 zxing-embedded = "4.3.0"
+gson = "2.10.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -37,6 +38,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing-core" }
 zxing-android-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxing-embedded" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }

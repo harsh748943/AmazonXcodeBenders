@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.security.PrivateKey;
@@ -51,28 +52,40 @@ public class SmsReceiver extends BroadcastReceiver {
         String senderUserId = parts[3];
         String senderPublicKeyBase64 = parts[4];
 
+        Log.d("ReceiverFlow", "Received SMS parts: encryptedAesKey=" + encryptedAesKeyBase64
+                + ", aesEncryptedPayload=" + aesEncryptedPayload
+                + ", signature=" + signatureBase64
+                + ", senderUserId=" + senderUserId
+                + ", senderPublicKey=" + senderPublicKeyBase64);
+
         try {
             String myUserId = getLoggedInUserPhone(context);
+            Log.d("ReceiverFlow", "My user ID: " + myUserId);
             PrivateKey privateKey = KeyStoreHelper.getPrivateKey(myUserId);
+            Log.d("ReceiverFlow", "My private key retrieved (alias: my_rsa_key_" + myUserId + ")");
             Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] encryptedAesKey = Base64.decode(encryptedAesKeyBase64, Base64.NO_WRAP);
             byte[] aesKeyBytes = rsaCipher.doFinal(encryptedAesKey);
 
             SecretKeySpec aesKeySpec = new SecretKeySpec(aesKeyBytes, "AES");
+            Log.d("ReceiverFlow", "AES key decrypted (raw bytes): " + Base64.encodeToString(aesKeyBytes, Base64.NO_WRAP));
             String txnPayload = CryptoHelper.decrypt(aesEncryptedPayload, aesKeySpec);
-
+            Log.d("ReceiverFlow", "Transaction payload decrypted: " + txnPayload);
             boolean isValid = KeyStoreHelper.verifyDataWithPublicKey(aesEncryptedPayload, signatureBase64, senderPublicKeyBase64);
+            Log.d("ReceiverFlow", "Signature verification result: " + isValid);
             if (!isValid) {
                 Toast.makeText(context, "Invalid signature in transaction SMS", Toast.LENGTH_SHORT).show();
                 return;
             }
+
 
             String[] payloadParts = txnPayload.split("\\|");
             String txnId = payloadParts[0];
             String senderPhone = payloadParts[1];
             double amount = Double.parseDouble(payloadParts[3]);
 
+            Log.d("ReceiverFlow", "Transaction ID: " + txnId + ", Sender: " + senderPhone + ", Amount: " + amount);
             if (WalletHelper.isDuplicateTransaction(context, txnId)) {
                 Toast.makeText(context, "Duplicate transaction ignored", Toast.LENGTH_SHORT).show();
                 return;
@@ -84,9 +97,12 @@ public class SmsReceiver extends BroadcastReceiver {
 
             // Send confirmation SMS to sender
             sendConfirmationSms(context, senderPhone, txnId, amount, true, senderPublicKeyBase64, myUserId);
+            Intent intent1 = new Intent("com.example.amazonxcodebenders.WALLET_UPDATED");
+            context.sendBroadcast(intent1);
 
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("ReceiverFlow", "Error processing transaction SMS", e);
             Toast.makeText(context, "Error processing transaction SMS", Toast.LENGTH_SHORT).show();
         }
     }
