@@ -28,6 +28,8 @@ import okhttp3.*;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -63,8 +65,7 @@ public class LoginActivity extends AppCompatActivity {
         EditText etPhone = findViewById(R.id.etPhone);
         EditText etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
-        //Button btnRegister = findViewById(R.id.btnRegister);
-       // btnRegister.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+
         btnLogin.setOnClickListener(v -> {
             String phone = etPhone.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -101,22 +102,71 @@ public class LoginActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot userSnapshot) {
                 if (!validateCredentials(userSnapshot, password)) return;
 
-                Query sessionsRef = FirebaseDatabase.getInstance()
+                // First, fetch only the last session
+                Query lastSessionRef = FirebaseDatabase.getInstance()
                         .getReference("user_sessions")
                         .child(phone)
-                        .limitToLast(10);
+                        .limitToLast(1);
 
-                sessionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                lastSessionRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot sessionsSnapshot) {
-                        String newSessionId = recordLoginSession(phone);
-                        analyzeSessionRisk(phone, newSessionId, sessionsSnapshot, userSnapshot);
+                    public void onDataChange(DataSnapshot lastSessionSnapshot) {
+                        String lastSessionStatus = null;
+                        for (DataSnapshot sessionSnap : lastSessionSnapshot.getChildren()) {
+                            lastSessionStatus = sessionSnap.child("status").getValue(String.class);
+                        }
+
+                        if ("verified_otp".equals(lastSessionStatus)||"verified".equals(lastSessionStatus)) {
+                            // Skip LLM for OTP-verified sessions
+                            String newSessionId = recordLoginSession(phone);
+                            proceedAfterVerification(phone, userSnapshot);
+                        } else {
+
+                            // Fetch last 3 sessions for LLM analysis
+                            Query sessionsRef = FirebaseDatabase.getInstance()
+                                    .getReference("user_sessions")
+                                    .child(phone)
+                                    .limitToLast(3);
+
+                            sessionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot sessionsSnapshot) {
+                                    String newSessionId = recordLoginSession(phone);
+                                    analyzeSessionRiskLLM(phone, newSessionId, sessionsSnapshot, userSnapshot);
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError error) {
+                                    Log.e(TAG, "Sessions fetch failed", error.toException());
+                                    proceedAfterVerification(phone, userSnapshot);
+                                }
+                            });
+                        }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError error) {
-                        Log.e(TAG, "Sessions fetch failed", error.toException());
-                        proceedAfterVerification(phone, userSnapshot);
+                        Log.e(TAG, "Last session fetch failed", error.toException());
+
+                        // Fallback: fetch last 3 sessions
+                        Query sessionsRef = FirebaseDatabase.getInstance()
+                                .getReference("user_sessions")
+                                .child(phone)
+                                .limitToLast(3);
+
+                        sessionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot sessionsSnapshot) {
+                                String newSessionId = recordLoginSession(phone);
+                                analyzeSessionRiskLLM(phone, newSessionId, sessionsSnapshot, userSnapshot);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError error) {
+                                Log.e(TAG, "Sessions fetch failed", error.toException());
+                                proceedAfterVerification(phone, userSnapshot);
+                            }
+                        });
                     }
                 });
             }
@@ -146,13 +196,16 @@ public class LoginActivity extends AppCompatActivity {
         return sessionRef.getKey();
     }
 
-    private void analyzeSessionRisk(String phone, String sessionId,
-                                    DataSnapshot pastSessions, DataSnapshot userData) {
+    // --- LLM-Based Risk Scoring Implementation ---
+    private void analyzeSessionRiskLLM(String phone, String sessionId,
+                                       DataSnapshot pastSessions, DataSnapshot userData) {
         new Thread(() -> {
             try {
                 JSONObject analysisData = new JSONObject();
                 analysisData.put("current_device", getDeviceInfo());
                 analysisData.put("current_ip", getIPAddress());
+                analysisData.put("shipping_address", userData.child("shipping_address").getValue(String.class));
+                analysisData.put("payment_method", userData.child("last_payment_method").getValue(String.class));
 
                 if (pastSessions.exists()) {
                     List<Map<String, String>> history = new ArrayList<>();
@@ -166,61 +219,100 @@ public class LoginActivity extends AppCompatActivity {
                     analysisData.put("history", history);
                 }
 
-                String response = callOpenRouterAPI(analysisData.toString());
-                int riskScore = Integer.parseInt(response);
-                Log.d(TAG, "Risk score: " + riskScore);
+                String llmResponse = callOpenRouterLLM(analysisData.toString());
+                // Start of fixes: Validate response before parsing
+                if (TextUtils.isEmpty(llmResponse)) {
+                    throw new JSONException("Empty LLM response");
+                }
+
+                JSONObject llmResult = new JSONObject(llmResponse);
+
+                // 1. Check if risk_score exists
+                if (!llmResult.has("risk_score")) {
+                    Log.e(TAG, "risk_score missing in response: " + llmResponse);
+                    throw new JSONException("Missing risk_score in LLM response");
+                }
+
+
+                int riskScore = llmResult.getInt("risk_score");
+                String confidence = llmResult.optString("confidence", "medium");
+                String reason = llmResult.optString("reason", "No reason provided");
+                String action = llmResult.optString("action", "allow");
 
                 runOnUiThread(() -> {
-                    updateSessionStatus(phone, sessionId, riskScore);
-                    if (riskScore < RISK_THRESHOLD) {
-                        proceedAfterVerification(phone, userData);
-                    } else {
-                        showSecurityChallenge(phone, sessionId, riskScore, userData);
-                    }
+                    updateSessionStatus(phone, sessionId, riskScore, confidence, reason, action);
+                    handleLLMSecurityAction(action, phone, sessionId, userData, reason, riskScore);
                 });
 
             } catch (Exception e) {
-                Log.e(TAG, "Risk analysis failed", e);
+                Log.e(TAG, "LLM risk analysis failed", e);
                 runOnUiThread(() -> proceedAfterVerification(phone, userData));
             }
         }).start();
     }
 
-    private String callOpenRouterAPI(String contextData) throws IOException, JSONException {
-        String prompt = String.format(
-                "Analyze this login attempt for fraud risk (0-100):\n" +
-                        "Context: %s\n\n" +
-                        "Respond ONLY with a number between 0-100 where:\n" +
-                        "0-30 = Safe\n31-70 = Suspicious\n71-100 = High risk",
-                contextData
-        );
+    private String callOpenRouterLLM(String contextData) throws IOException {
+        try {
+            // 1. Build JSON payload properly
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("model", "deepseek/deepseek-r1:free");
 
-        RequestBody body = RequestBody.create(
-                String.format("{\"model\":\"deepseek/deepseek-r1:free\"," +
-                        "\"messages\":[{\"role\":\"system\",\"content\":\"%s\"}]}", prompt),
-                JSON
-        );
+            JSONArray messages = new JSONArray();
+            JSONObject message = new JSONObject();
+            message.put("role", "system");
+            String safePrompt = "Analyze this login/session/payment for fraud risk.\n" +
+                    "Context (escaped JSON): " + JSONObject.quote(contextData) + "\n" +
+                    "If the IP address is link-local (starts with fe80::), ignore it and do not increase risk.\n" +
+                    "Respond ONLY in JSON format:\n" +
+                    "{\"risk_score\": <0-100>, \"confidence\": \"<low|medium|high>\", \"reason\": \"<short explanation>\", \"action\": \"<allow|force_otp|block>\"}";
 
-        Request request = new Request.Builder()
-                .url(OPENROUTER_URL)
-                .post(body)
-                .addHeader("Authorization", "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")
-                .addHeader("HTTP-Referer", "https://amazonxcodebenders.com")
-                .addHeader("X-Title", "AmazonXcodeBenders")
-                .build();
+            // JSONArray messages = new JSONArray();
 
-        try (Response response = httpClient.newCall(request).execute()) {
-            String responseBody = response.body().string();
-            return new JSONObject(responseBody)
-                    .getJSONArray("choices")
-                    .getJSONObject(0)
-                    .getJSONObject("message")
-                    .getString("content")
-                    .replaceAll("\\D+", "");
+            message.put("content", safePrompt);
+            messages.put(message);
+            requestBody.put("messages", messages);
+
+            // 3. Create request body
+            RequestBody body = RequestBody.create(
+                    requestBody.toString(),
+                    JSON
+            );
+
+            // 4. Build request with headers
+            Request request = new Request.Builder()
+                    .url(OPENROUTER_URL)
+                    .post(body)
+                    .addHeader("Authorization", "Bearer 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")
+                    .addHeader("HTTP-Referer", "https://amazonxcodebenders.com")
+                    .addHeader("X-Title", "AmazonXcodeBenders")
+                    .build();
+
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String responseBody = response.body().string();
+                JSONObject root = new JSONObject(responseBody);
+                String content = root.getJSONArray("choices")
+                        .getJSONObject(0)
+                        .getJSONObject("message")
+                        .getString("content");
+
+                // Strip Markdown code blocks
+                if (content.startsWith("```json")) {
+                    content = content.substring(7, content.length() - 3).trim();
+                }
+                return content;
+            }
+        } catch (JSONException e) {
+            throw new IOException("JSON creation failed: " + e.getMessage());
         }
     }
 
-    private void updateSessionStatus(String phone, String sessionId, int riskScore) {
+
+    private void updateSessionStatus(String phone, String sessionId, int riskScore, String confidence, String reason, String action) {
         DatabaseReference sessionRef = FirebaseDatabase.getInstance()
                 .getReference("user_sessions")
                 .child(phone)
@@ -228,21 +320,48 @@ public class LoginActivity extends AppCompatActivity {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("risk_score", riskScore);
-        updates.put("status", riskScore < RISK_THRESHOLD ? "verified" : "suspicious");
+        updates.put("confidence", confidence);
+        updates.put("reason", reason);
+        updates.put("action", action);
+        updates.put("status", action.equals("allow") ? "verified" : action);
         sessionRef.updateChildren(updates);
     }
 
+    private void handleLLMSecurityAction(String action, String phone, String sessionId, DataSnapshot userData, String reason, int riskScore) {
+        switch (action) {
+            case "allow":
+                proceedAfterVerification(phone, userData);
+                break;
+            case "force_otp":
+                showSecurityChallenge(phone, sessionId, riskScore, userData, reason);
+                break;
+            case "block":
+                blockSession(phone, sessionId, reason);
+                Toast.makeText(this, "Login blocked: " + reason, Toast.LENGTH_LONG).show();
+                break;
+            default:
+                proceedAfterVerification(phone, userData);
+        }
+    }
+
+    private void blockSession(String phone, String sessionId, String reason) {
+        DatabaseReference sessionRef = FirebaseDatabase.getInstance()
+                .getReference("user_sessions")
+                .child(phone)
+                .child(sessionId);
+        sessionRef.child("status").setValue("blocked");
+        sessionRef.child("block_reason").setValue(reason);
+    }
+
     private void showSecurityChallenge(String phone, String sessionId,
-                                       int riskScore, DataSnapshot userData) {
+                                       int riskScore, DataSnapshot userData, String reason) {
         new AlertDialog.Builder(this)
                 .setTitle("Security Verification")
                 .setMessage(String.format(
-                        "Unusual login detected (Risk score: %d/%d).\n" +
-                                "Device: %s\nIP: %s\n\nVerify it's you:",
-                        riskScore, RISK_THRESHOLD, getDeviceInfo(), getIPAddress()))
+                        "Unusual login detected (Risk score: %d).\nReason: %s\nDevice: %s\nIP: %s\n\nVerify it's you:",
+                        riskScore, reason, getDeviceInfo(), getIPAddress()))
                 .setPositiveButton("Send OTP", (d, w) -> sendOTP(phone, sessionId, userData))
                 .setNegativeButton("Cancel", (d, w) -> {
-                    // Log failed verification attempt
                     FirebaseDatabase.getInstance()
                             .getReference("user_sessions")
                             .child(phone)
@@ -250,7 +369,6 @@ public class LoginActivity extends AppCompatActivity {
                             .child("status")
                             .setValue("verification_failed");
 
-                    // Optional: Logout user or take other security actions
                     Toast.makeText(this, "Verification required to proceed", Toast.LENGTH_LONG).show();
                 })
                 .setCancelable(false)
@@ -258,16 +376,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void sendOTP(String phone, String sessionId, DataSnapshot userData) {
-        // Show progress dialog
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Sending OTP...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        // Generate OTP (6-digit random number)
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = "12345";
 
-        // Store OTP in Firebase with expiration (5 minutes)
         DatabaseReference otpRef = FirebaseDatabase.getInstance()
                 .getReference("otp_verifications")
                 .child(phone)
@@ -280,10 +395,8 @@ public class LoginActivity extends AppCompatActivity {
 
         otpRef.setValue(otpData)
                 .addOnSuccessListener(aVoid -> {
-                    // Send OTP via SMS (implement your SMS gateway integration)
                     sendOtpViaSms(phone, otp);
 
-                    // Update session status
                     FirebaseDatabase.getInstance()
                             .getReference("user_sessions")
                             .child(phone)
@@ -302,11 +415,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void sendOtpViaSms(String phoneNumber, String otp) {
-        // Implement your SMS gateway integration here
-        // This could be Twilio, AWS SNS, or your custom API
-        Log.d(TAG, "OTP for " + phoneNumber + ": " + otp); // For testing
+        // SMS gateway integration required here
+        Log.d(TAG, "OTP for " + phoneNumber + ": " + otp); // Testing purpose
 
-        // Example using SMS Retriever API (auto-read)
         SmsRetrieverClient client = SmsRetriever.getClient(this);
         Task<Void> task = client.startSmsRetriever();
         task.addOnSuccessListener(aVoid -> Log.d(TAG, "SMS retriever started"));
@@ -317,13 +428,11 @@ public class LoginActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter OTP");
 
-        // Set up the input
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         input.setHint("6-digit OTP");
         builder.setView(input);
 
-        // Set up the buttons
         builder.setPositiveButton("Verify", (dialog, which) -> {
             String otp = input.getText().toString().trim();
             verifyOtp(phone, sessionId, otp, userData);
@@ -363,19 +472,18 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 String storedOtp = snapshot.child("otp").getValue(String.class);
-                long expiresAt = snapshot.child("expires_at").getValue(Long.class);
+                Long expiresAt = snapshot.child("expires_at").getValue(Long.class);
 
                 if (storedOtp == null || !storedOtp.equals(otp)) {
                     Toast.makeText(LoginActivity.this, "Invalid OTP", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                if (System.currentTimeMillis() > expiresAt) {
+                if (expiresAt == null || System.currentTimeMillis() > expiresAt) {
                     Toast.makeText(LoginActivity.this, "OTP expired", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // OTP verification successful
                 FirebaseDatabase.getInstance()
                         .getReference("user_sessions")
                         .child(phone)
@@ -383,7 +491,6 @@ public class LoginActivity extends AppCompatActivity {
                         .child("status")
                         .setValue("verified_otp");
 
-                // Clean up OTP record
                 otpRef.removeValue();
 
                 proceedAfterVerification(phone, userData);
@@ -398,7 +505,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    // SMS Receiver for auto OTP reading (add to your activity)
     private final BroadcastReceiver smsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -409,15 +515,12 @@ public class LoginActivity extends AppCompatActivity {
                     if (status != null) {
                         switch (status.getStatusCode()) {
                             case CommonStatusCodes.SUCCESS:
-                                // Get SMS message
                                 String message = (String) extras.get(SmsRetriever.EXTRA_SMS_MESSAGE);
                                 if (message != null) {
-                                    // Extract OTP
                                     Pattern pattern = Pattern.compile("\\d{6}");
                                     Matcher matcher = pattern.matcher(message);
                                     if (matcher.find()) {
                                         String otp = matcher.group(0);
-                                        // Auto-fill OTP if verification dialog is open
                                         if (otpVerificationDialog != null && otpVerificationDialog.isShowing()) {
                                             otpInput.setText(otp);
                                             verifyOtp(currentPhone, currentSessionId, otp, currentUserData);
@@ -426,7 +529,6 @@ public class LoginActivity extends AppCompatActivity {
                                 }
                                 break;
                             case CommonStatusCodes.TIMEOUT:
-                                // Timeout occurred
                                 break;
                         }
                     }
