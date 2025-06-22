@@ -7,11 +7,17 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
+import java.util.function.Consumer;
 
 public class HibpChecker {
 
     public interface BreachCallback {
         void onResult(boolean isBreached);
+    }
+
+    public static void checkEmail(String email, Consumer<Boolean> callback) {
+
+        callback.accept(false);
     }
 
     public static void checkPassword(String password, BreachCallback callback) {

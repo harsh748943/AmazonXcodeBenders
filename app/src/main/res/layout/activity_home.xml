@@ -551,8 +551,8 @@
 
                     <ImageView
                         android:id="@+id/smart_reminder"
-                        android:src="@drawable/ic_receive_money"
-                        android:layout_width="50dp"
+                        android:src="@drawable/ic_reminder"
+                        android:layout_width="60dp"
                         android:layout_height="50dp"
                         android:scaleType="centerCrop"
                         android:contentDescription="Bill Reminders" />

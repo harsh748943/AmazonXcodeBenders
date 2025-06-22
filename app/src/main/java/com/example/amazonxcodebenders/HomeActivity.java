@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,7 +54,7 @@ import org.json.*;
 
 public class HomeActivity extends AppCompatActivity {
 
-    // HomeActivity.java के अंदर
+
     private final BroadcastReceiver walletUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -71,6 +72,7 @@ public class HomeActivity extends AppCompatActivity {
     private TextView sendMoneyText, offlineBar, tvWalletBalance;
     private boolean isConnected = false;
     private NetworkChangeReceiver networkChangeReceiver;
+    private AlertDialog loadingDialog;
 
 
     private WalletViewModel walletViewModel;
@@ -231,7 +233,7 @@ public class HomeActivity extends AppCompatActivity {
                     String key = name.toLowerCase().trim();
                     contactsMap.put(key, phone.trim());
                     numberMap.put(key, phone.trim());
-                    Log.d(TAG, "Loaded contact: " + name + " -> " + phone);
+                    //Log.d(TAG, "Loaded contact: " + name + " -> " + phone);
                 }
             }
             cursor.close();
@@ -248,6 +250,15 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void processVoiceWithAI(String spokenText) {
+
+
+        runOnUiThread(() -> {
+            loadingDialog = new AlertDialog.Builder(this)
+                    .setView(getLayoutInflater().inflate(R.layout.dialog_loading, null))
+                    .setCancelable(false)
+                    .create();
+            loadingDialog.show();
+        });
         Log.d(TAG, "Processing voice: " + spokenText);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -373,6 +384,13 @@ public class HomeActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.e(TAG, "OpenRouter DeepSeek API exception", e);
                 runOnUiThread(() -> Toast.makeText(this, "AI Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+            finally {
+                runOnUiThread(() -> {
+                    if (loadingDialog != null && loadingDialog.isShowing()) {
+                        loadingDialog.dismiss();
+                    }
+                });
             }
         });
 

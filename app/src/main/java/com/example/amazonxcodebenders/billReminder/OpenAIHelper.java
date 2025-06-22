@@ -44,7 +44,12 @@ public class OpenAIHelper {
                 JSONObject message = new JSONObject();
                 message.put("role", "user");
                 // Prompt: Ask for only JSON reply
-                message.put("content", "Extract bill info from this message: '" + smsText + "'. Reply only in JSON with keys: amount, due_date, description.");
+                message.put("content",
+                        "Extract bill info from: '" + smsText + "'. " +
+                                "Reply ONLY in JSON with keys: amount, due_date, description, bill_type. " +
+                                "bill_type must be one of: Electricity Bill, Gas Bill, Water Bill, Credit Card Bill, Mobile Bill, Internet Bill, Other."
+                );
+
 
                 JSONArray messagesArray = new JSONArray();
                 messagesArray.put(message);
