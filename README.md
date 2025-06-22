@@ -1,106 +1,105 @@
-# AmazonPay+ App 💸📲- Hackathon Project
+# Code Benders – Smart Payment Optimization
 
-AmazonPay Offline is an innovative mobile payment solution developed for the Amazon HackOn hackathon. This app extends digital payment capabilities beyond internet connectivity with SMS-based offline transactions while incorporating cutting-edge features like voice payments, AI-powered bill reminders, and intelligent budgeting tools.
+### Team Members:
+- Harsh Sharma
+- Hrishabh Patle
+- Disha Vaish 
+- Aryan Raj
 
-#Key Features
-1. SMS-Based Offline Transactions :
-Enables payments without internet connectivity.
-Transaction confirmations delivered via SMS to both sender and receiver.
-Direct deduction from user's digital wallet within the app.
-Works in areas with poor or no internet coverage.
+### Idea Submission:
+[Idea](https://drive.google.com/file/d/1GdSrb6QDgoAvca-MI84K5w6Tbz0YGM_y/view?usp=sharing)
 
-2. Say to Pay - Voice-Activated Payments :
-Send money using simple voice commands (e.g., "Send ₹500 to John").
-Automatic form filling based on voice input.
-Directs user to payment page requiring only PIN entry.
-Supports natural language processing for intuitive commands.
+## PROJECT OVERVIEW:
 
-3. AI-Powered Bill Management :
-Scans user SMS for bill payment reminders.
-Organizes all upcoming bills in one dashboard.
-One-click "Pay Now" functionality for instant bill settlement.
+Our project, built for Amazon HackOn 2025 under the theme Smart Payment Optimization, reimagines the future of digital payments by solving three core challenges:
 
-4. Intelligent Budgeting Assistant :
-Tracks all income and expenses.
-Generates detailed financial reports.
-Provides visual breakdowns of spending patterns.
-Offers personalized financial advice.
-Suggests budget optimizations based on spending habits.
+- Smart Payment Optimization
+- Fraud Detection
+- Budgeting & Personalized Rewards
 
-5. Enhanced Security Features :
-Password breach detection during account setup.
-Blocks compromised passwords from being used.
-Protects against account takeover attempts.
-Secure PIN-based transaction authorization.
+## Problem Statements & Solutions
+
+## 1. Smart Payment Optimization
+
+### 🔑 Key Features
+
+#### **Offline Payment Mode via SMS**
+Enables secure transactions even without internet using encrypted SMS, ensuring inclusivity in low-connectivity regions.
+
+- ✅ Works without internet  
+- 📩 Instant SMS confirmations  
+- 🔐 Fraud-proof, NPCI-compliant  
 
 
-#Technical Implementation
 
-1. Core Technologies :
-Android/iOS native development
-SMS gateway integration
-Voice recognition APIs
-Machine learning for transaction analysis
-Natural language processing for voice commands
-Secure encryption for all transactions
+---
 
+#### **Say to Pay – AI-Powered Voice Payments**
+Just say the amount and recipient — AI handles the rest.
 
-2. AI Components :
-SMS parsing and bill detection algorithms
-Spending pattern recognition
-Predictive budgeting models
-Financial recommendation engine
+- 🗣️ Voice assistant  for hands-free, fast payments  
+- 🌐 Multilingual support (planned)  
 
 
-#Installation: 
+---
 
-1.Clone the repository: git clone [repository-url]
-2.Install dependencies: npm install or yarn install
-3.Configure environment variables (SMS gateway, voice API keys, etc.)
-4.Build the application: react-native run-android or react-native run-ios
+#### **AI-Powered Auto Bill Detection & Smart Reminders**
+Scans SMS, emails, and recurring transactions to auto-detect bills and set up one-tap reminders.
 
-#Usage
+- 🔔 Never miss a bill  
+- 🧠 Personalized reminders  
+- 🔗 Seamless Amazon Pay integration  
 
-1.Making an Offline Payment:
-Open the app and select "Offline Payment".
-Enter recipient details and amount.
-Confirm transaction with your PIN.
-Receive SMS confirmation (sender and recipient).
 
-2.Using Voice Payments:
-Tap the microphone icon.
-Speak your payment command (e.g., "Send ₹1000 to Amazon Electricity Bill").
-Verify auto-filled details.
-Enter PIN to complete transaction.
 
-3.Bill Management:
-App automatically scans SMS for bills.
-View upcoming payments in "Bills" section.
-Tap "Pay Now" for instant payment.
+---
 
-4.Budgeting Tools:
-Manually enter or sync transactions.
-View monthly reports in "Budget" section.
-Receive spending alerts and suggestions.
+## 2. Fraud Detection
 
-5.Security Notes:
-All transactions are encrypted.
-Never stores full financial details on device.
-Uses tokenization for payment processing.
-Regular security updates pushed to all users.
+### 🔑 Key Features
 
-#Future Roadmap
-Integration with more payment gateways
-Multi-language voice command support
-Family budget sharing features
-Predictive cash flow analysis
-Reward system for good financial habits
+#### **LLM-Based Account Risk Scoring Assistant**
+- 🔐 Reviews logins, sessions, and payments  
+- ⚠️ Flags risky behavior (VPN/device changes)  
+- 🚫 Triggers OTP/account lock  
+- 🧾 Provides explainable AI feedback  
 
-#Team
-CodeBenders
 
-#Team Members
-1.Harsh Sharma
-2.Hrishabh Patle
-3.Disha Vaish
-4.Aryan Raj  
+
+---
+
+#### **Credential Breach Detection**
+- Alerts if user credentials are found in breaches during registration/reset  
+
+
+---
+
+## 3. Budgeting & Personalized Rewards
+
+### 🔑 Key Features
+
+#### **Monthly Smart Budgeting**
+- 🧾 AI tracks spending and sets budget limits  
+- 🎯 Personalized insights & savings goals  
+
+#### **Personalized Discounts & Cashback**
+- Detects frequently bought items  
+- 💸 Offers targeted discounts  
+
+## 🛠️ Tech Stack
+
+| Layer                     | Technology Used                              |
+|--------------------------|-----------------------------------------------|
+| **Frontend (Android)**   | Java, XML (Android SDK)                       |
+| **Backend**              | Firebase Realtime Database, Firebase Auth     |
+| **Deployment & Codebase**| GitHub                                        |
+
+
+
+
+
+
+
+
+
+
