@@ -63,29 +63,29 @@ Build the application: react-native run-android or react-native run-ios
 
 #Usage
 
-#Making an Offline Payment
+1.Making an Offline Payment
 Open the app and select "Offline Payment"
 Enter recipient details and amount
 Confirm transaction with your PIN
 Receive SMS confirmation (sender and recipient)
 
-#Using Voice Payments
+2.Using Voice Payments
 Tap the microphone icon
 Speak your payment command (e.g., "Send ₹1000 to Amazon Electricity Bill")
 Verify auto-filled details
 Enter PIN to complete transaction
 
-#Bill Management
+3.Bill Management
 App automatically scans SMS for bills
 View upcoming payments in "Bills" section
 Tap "Pay Now" for instant payment
 
-#Budgeting Tools
+4.Budgeting Tools
 Manually enter or sync transactions
 View monthly reports in "Budget" section
 Receive spending alerts and suggestions
 
-#Security Notes
+5.Security Notes
 All transactions are encrypted
 Never stores full financial details on device
 Uses tokenization for payment processing
