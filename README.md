@@ -5,31 +5,31 @@ An all-in-one intelligent digital payment solution designed during **Amazon Hack
 AmazonPay Offline is an innovative mobile payment solution developed for the Amazon HackOn hackathon. This app extends digital payment capabilities beyond internet connectivity with SMS-based offline transactions while incorporating cutting-edge features like voice payments, AI-powered bill reminders, and intelligent budgeting tools.
 
 #Key Features
-1. SMS-Based Offline Transactions
+1. SMS-Based Offline Transactions :
 Enables payments without internet connectivity
 Transaction confirmations delivered via SMS to both sender and receiver
 Direct deduction from user's digital wallet within the app
 Works in areas with poor or no internet coverage
 
-2. Say to Pay - Voice-Activated Payments
+2. Say to Pay - Voice-Activated Payments :
 Send money using simple voice commands (e.g., "Send ₹500 to John")
 Automatic form filling based on voice input
 Directs user to payment page requiring only PIN entry
 Supports natural language processing for intuitive commands
 
-3. AI-Powered Bill Management
+3. AI-Powered Bill Management :
 Scans user SMS for bill payment reminders
 Organizes all upcoming bills in one dashboard
 One-click "Pay Now" functionality for instant bill settlement
 
-4. Intelligent Budgeting Assistant
+4. Intelligent Budgeting Assistant :
 Tracks all income and expenses
 Generates detailed financial reports
 Provides visual breakdowns of spending patterns
 Offers personalized financial advice
 Suggests budget optimizations based on spending habits
 
-5. Enhanced Security Features
+5. Enhanced Security Features :
 Password breach detection during account setup
 Blocks compromised passwords from being used
 Protects against account takeover attempts
@@ -38,7 +38,7 @@ Secure PIN-based transaction authorization
 
 #Technical Implementation
 
-#Core Technologies
+1. Core Technologies :
 Android/iOS native development
 SMS gateway integration
 Voice recognition APIs
@@ -47,14 +47,15 @@ Natural language processing for voice commands
 Secure encryption for all transactions
 
 
-#AI Components
+2. AI Components :
 SMS parsing and bill detection algorithms
 Spending pattern recognition
 Predictive budgeting models
 Financial recommendation engine
 
 
-#Installation
+#Installation: 
+
 Clone the repository: git clone [repository-url]
 Install dependencies: npm install or yarn install
 Configure environment variables (SMS gateway, voice API keys, etc.)
@@ -101,7 +102,7 @@ Reward system for good financial habits
 CodeBenders
 
 #Team Members
-Harsh Sharma
-Hrishabh Patle
-Disha Vaish
-Aryan Raj  
+1.Harsh Sharma
+2.Hrishabh Patle
+3.Disha Vaish
+4.Aryan Raj  
