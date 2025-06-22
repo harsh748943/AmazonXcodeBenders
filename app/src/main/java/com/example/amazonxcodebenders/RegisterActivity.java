@@ -1,5 +1,6 @@
 package com.example.amazonxcodebenders;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -8,8 +9,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.amazonxcodebenders.R;
-import com.example.amazonxcodebenders.HibpChecker;
+import com.example.amazonxcodebenders.paymentOptimization.voicePayment.ChooseContactActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class RegisterActivity extends AppCompatActivity {
@@ -34,20 +34,46 @@ public class RegisterActivity extends AppCompatActivity {
             String password = inputPasswordRegister.getText().toString();
             String email = inputPhoneRegister.getText().toString() + "@example.com";
 
-            HibpChecker.checkPassword(password, isBreached -> runOnUiThread(() -> {
-                if (isBreached) {
-                    Toast.makeText(RegisterActivity.this, "⚠️ This password has been leaked. Please choose a different one.", Toast.LENGTH_LONG).show();
+            // Step 1: Check password breach
+            HibpChecker.checkPassword(password, isPasswordBreached -> runOnUiThread(() -> {
+                if (isPasswordBreached) {
+                    // Password breached - block registration
+                    Toast.makeText(RegisterActivity.this,
+                            "⚠ This password has been leaked. Please choose a different one.",
+                            Toast.LENGTH_LONG).show();
                 } else {
-                    mAuth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    Toast.makeText(RegisterActivity.this, "✅ Registered Successfully", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(RegisterActivity.this, "❌ Registration Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                                }
-                            });
+                    // Password safe - now check email
+                    HibpChecker.checkEmail(email, isEmailBreached -> runOnUiThread(() -> {
+                        if (isEmailBreached) {
+                            // Email breached - warn but allow registration
+                            Toast.makeText(RegisterActivity.this,
+                                    "⚠ This email has appeared in a data breach. Please enable two-factor authentication.",
+                                    Toast.LENGTH_LONG).show();
+                        }
+
+                        // Proceed with registration (password is safe)
+                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+
+                        startActivity(intent);
+
+                    }));
                 }
             }));
         });
+    }
+
+    private void registerUser(String email, String password) {
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(RegisterActivity.this,
+                                "✅ Registered Successfully",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(RegisterActivity.this,
+                                "❌ Registration Failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }

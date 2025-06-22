@@ -7,11 +7,19 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
+import java.util.function.Consumer;
 
 public class HibpChecker {
 
     public interface BreachCallback {
         void onResult(boolean isBreached);
+    }
+
+    public static void checkEmail(String email, Consumer<Boolean> callback) {
+        // Real implementation requires a paid API key and HTTPS request.
+        // For demo/testing, always return false (not breached).
+        // Replace this with actual API call if you have access.
+        callback.accept(false);
     }
 
     public static void checkPassword(String password, BreachCallback callback) {
