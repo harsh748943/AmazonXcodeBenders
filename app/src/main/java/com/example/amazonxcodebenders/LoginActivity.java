@@ -63,7 +63,8 @@ public class LoginActivity extends AppCompatActivity {
         EditText etPhone = findViewById(R.id.etPhone);
         EditText etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
-
+        //Button btnRegister = findViewById(R.id.btnRegister);
+       // btnRegister.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
         btnLogin.setOnClickListener(v -> {
             String phone = etPhone.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -103,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
                 Query sessionsRef = FirebaseDatabase.getInstance()
                         .getReference("user_sessions")
                         .child(phone)
-                        .limitToLast(3);
+                        .limitToLast(10);
 
                 sessionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
